@@ -43,7 +43,7 @@ def main():
     ap.add_argument("--today", default=None)
     a = ap.parse_args()
     scanned = parse_nuft(open(a.md, encoding="utf-8").read())
-    ic.print_stats(a.source, ic.commit(scanned, a.csv, a.sources, a.source, a.bucket, a.today))
+    ic.print_stats(a.source, ic.commit(scanned, a.csv, a.sources, a.today))
 
 if __name__ == "__main__":
     main()
