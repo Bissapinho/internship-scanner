@@ -1,0 +1,18 @@
+{
+  "name": "bissap-marketplace",
+  "owner": {
+    "name": "Bissap",
+    "email": "alexandregalle3@gmail.com"
+  },
+  "metadata": {
+    "description": "Marketplace perso de plugins Cowork",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "quant-internship-scanner",
+      "source": "./quant-internship-scanner",
+      "description": "Scanne les offres de stage d'été (summer internships) en data science et quantitative finance chez les grandes firmes."
+    }
+  ]
+}

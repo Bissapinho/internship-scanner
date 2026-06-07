@@ -1,0 +1,10 @@
+{
+  "name": "quant-internship-scanner",
+  "version": "0.1.0",
+  "description": "Scanne les ouvertures de stages d'été en data science et quantitative finance (De Shaw, Citadel, QuantumBlack, Jane Street, etc.) et exporte les résultats en CSV.",
+  "author": {
+    "name": "Bissap",
+    "email": "alexandregalle3@gmail.com"
+  },
+  "keywords": ["internship", "stage", "quant", "data-science", "finance", "summer", "scraper"]
+}
