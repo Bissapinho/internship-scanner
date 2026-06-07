@@ -77,11 +77,19 @@ contrairement à web_fetch). Applique les filtres décrits dans le champ `note` 
 
 ---
 
-## Étape 4 — Couche Search (filet de sécurité)
+## Étape 4 — Couche WebSearch (LE moteur pour banques + hedge funds Europe)
 
-Pour les `search_fallback.extra_companies` (firmes sans source fiable), lance une `WebSearch`
-avec les `query_templates`. Garde uniquement les liens menant à une **offre réelle** (page
-d'application), pas les articles ou agrégateurs génériques.
+C'est la couche la plus importante pour les cibles prioritaires (DE Shaw, BNP, SocGen, G-Research,
+Marshall Wace…), dont les sites propres sont souvent injoignables et qui ne sont pas dans les repos.
+
+Pour chaque firme prioritaire / `search_fallback.extra_companies`, lance une `WebSearch` avec les
+`query_templates` (ajoute un terme géo Europe). Garde uniquement les liens menant à une **offre
+réelle** (page d'application), jamais des articles ou agrégateurs génériques. **Vérifie que l'URL
+n'est pas factice** (pas d'URL inventée — uniquement celles réellement renvoyées par la recherche).
+
+Rassemble ces offres dans un fichier JSON (`jobs.json`, liste de `{company, title, location, url}`),
+puis injecte-les via `scan_addjobs.py` (voir Étape 6). **N'écris jamais ces lignes dans le CSV à
+la main** — c'est la cause n°1 des colonnes décalées.
 
 ---
 
@@ -90,7 +98,7 @@ d'application), pas les articles ou agrégateurs génériques.
 Garde une offre seulement si les TROIS conditions sont vraies :
 
 1. **Titre** : contient un mot de `keywords.include_title` **ET** un mot de `keywords.include_type`.
-   Déduis le `role_bucket` via `keywords.role_buckets`.
+   **Les postes SWE / software engineer sont exclus automatiquement par les scripts.**
 2. **GÉO — colonne `in_europe` (ne rien exclure)** : dérive `in_europe` de la localisation via
    `keywords.geo` → `"yes"` si elle matche `include_cities`/`include_regions`, `"no"` si elle
    matche `exclude` (US/Asie), `"?"` si inconnue. **Garde TOUTES les offres** ; l'utilisateur
@@ -107,11 +115,11 @@ Garde une offre seulement si les TROIS conditions sont vraies :
 `data_science_ai`, `data_analyst`, `consulting_data` (priority 3) sont secondaires — inclus
 seulement après, jamais au détriment des offres finance.
 
-**Nettoyage automatique (fait par le script via `internship_common.clean`)** : les espaces et
-retours-ligne sont normalisés, et toute ligne **sans entreprise** (nom vide / `(nom manquant)` /
-`unknown`…) ou sans titre/url est **supprimée**.
+**Nettoyage automatique (fait par les scripts via `internship_common.clean`)** : normalisation des
+espaces, suppression des lignes **sans entreprise** / sans titre / sans url, et **suppression des
+postes SWE / software engineer**.
 
-**Déduplique** par (entreprise + titre + lieu).
+**Déduplique** par (entreprise + titre + url).
 
 ---
 
@@ -120,44 +128,48 @@ retours-ligne sont normalisés, et toute ligne **sans entreprise** (nom vide / `
 **Règle clé : on ne recrée JAMAIS un nouveau CSV.** Le scan met à jour **un seul fichier
 persistant** dans le dossier de l'utilisateur : `stages_quant_ds.csv` (sans date dans le nom).
 
-En-tête EXACT :
+En-tête EXACT (6 colonnes, rien d'autre) :
 
 ```
-company,title,role_bucket,location,in_europe,source,url,first_seen,last_seen,status,applied
+company,title,location,in_europe,url,first_seen
 ```
 
-`in_europe` ∈ {yes, no, ?} — dérivé de la localisation. Aucune offre n'est exclue ; on filtre dessus.
+`in_europe` ∈ {yes, no, ?}. Upsert (clé = `company` + `title` + `url`) : offre nouvelle → ajoutée
+avec `first_seen` = aujourd'hui ; offre déjà présente → conservée (on garde son `first_seen`).
+Dédup par cette clé.
 
-Logique d'upsert (clé = `company` + `title` + `url`) :
+### ⚠️ RÈGLE ABSOLUE — n'écris JAMAIS le CSV à la main
 
-- offre **déjà présente** → `last_seen` = aujourd'hui, `status` = `OPEN` ;
-- offre **nouvelle** → ajout avec `first_seen` = `last_seen` = aujourd'hui, `status` = `NEW` ;
-- offre **disparue** d'une source déjà scannée → `status` = `CLOSED` (on garde l'historique) ;
-- la colonne **`applied`** (annotations de l'utilisateur) est **toujours préservée**.
+Toutes les sources (NUFT, Ashby, **et surtout WebSearch**) passent par les scripts du plugin, qui
+sont les SEULS à écrire le CSV. Écrire ou éditer le CSV toi-même provoque des colonnes décalées
+(« oui » dans url, ville dans in_europe, etc.). Donc :
 
-### Couche NUFT (quant) — utiliser le script fourni
+**NUFT** : `web_fetch` le README brut → fichier `nuft.md` → puis
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_nuft.py nuft.md <dossier_user>/stages_quant_ds.csv \
+    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json
+```
 
-Pour la source NUFT, n'écris pas le parsing à la main : utilise le script testé du plugin.
+**Ashby (OpenAI/labos)** : `web_fetch` le JSON → fichier `ashby.json` → puis
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_ashby.py ashby.json <dossier_user>/stages_quant_ds.csv \
+    --company "OpenAI" --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json
+```
 
-1. `web_fetch` l'URL `github_nuft` → écris le Markdown brut dans un fichier temporaire `nuft.md`.
-2. Lance :
-   ```
-   python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_nuft.py nuft.md <dossier_user>/stages_quant_ds.csv \
-       --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json \
-       --source "NUFT 2027" --bucket hedge_fund_quant
-   ```
-   Le script gère le parsing (sections `## Firme` + sous-tables, sections vides ignorées),
-   **l'annotation `in_europe`** (lu depuis `keywords.geo` de `sources.json` : yes/no/?, sans
-   rien exclure) ET l'upsert. Il n'accède PAS au réseau. La sortie affiche
-   `in_europe: X oui / Y non / Z ? | +N NEW...`.
+**WebSearch** (banques + hedge funds Europe) : rassemble les offres trouvées dans un fichier JSON
+(liste d'objets `{company, title, location, url}`) → puis
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_addjobs.py jobs.json <dossier_user>/stages_quant_ds.csv \
+    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json --source "WebSearch"
+```
 
-Pour les autres sources (API, browse, search), applique la même logique d'upsert sur le même
-fichier (réutilise les fonctions `load_csv` / `upsert` / `write_csv` du script, avec
-`role_bucket` adapté et `--source` distinct par source).
+Tous les scripts appliquent automatiquement : nettoyage, **filtre SWE** (postes software engineer
+supprimés), annotation `in_europe`, upsert. Aucun accès réseau dans les scripts.
 
-Termine en présentant le fichier (`mcp__cowork__present_files`) et donne un récap : `+N NEW`,
-`M OPEN`, `K CLOSED`, et les sources en échec. Mentionne que tôt dans le cycle, peu d'offres
-sont ouvertes — un résultat maigre est normal.
+Après tous les scripts, **résous les `in_europe == "?"`** restants en relisant le CSV et en
+corrigeant avec ta connaissance géo (ne touche qu'aux `?`). Puis présente le fichier
+(`mcp__cowork__present_files`) et donne le récap (`+N nouveaux`, total, sources en échec).
+Tôt dans le cycle, peu d'offres sont ouvertes — un résultat maigre est normal.
 
 ---
 

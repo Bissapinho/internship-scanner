@@ -51,7 +51,7 @@ def main():
         rows = [r for r in rows
                 if ic.is_internship(r["title"], kw) or "intern" in r["employmentType"].lower()]
     source = a.source or f"Ashby:{a.company}"
-    ic.print_stats(source, ic.commit(rows, a.csv, a.sources, source, a.bucket, a.today))
+    ic.print_stats(source, ic.commit(rows, a.csv, a.sources, a.today))
 
 if __name__ == "__main__":
     main()

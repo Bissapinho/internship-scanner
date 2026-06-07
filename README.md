@@ -43,16 +43,17 @@ Dans Cowork :
 /scan
 ```
 
-Met à jour **un CSV unique persistant** `stages_quant_ds.csv` (upsert, jamais recréé), colonnes :
-`company, title, role_bucket, location, in_europe, source, url, first_seen, last_seen, status, applied`.
+Met à jour **un CSV unique persistant** `stages_quant_ds.csv` (upsert, jamais recréé), **6 colonnes** :
+`company, title, location, in_europe, url, first_seen`.
 
 La colonne **`in_europe`** (yes / no / ?) est dérivée de la localisation via `keywords.geo`.
-**Aucune offre n'est exclue** — tu filtres toi-même sur cette colonne (ex. `in_europe = yes`).
+**Aucune offre n'est exclue géographiquement** — tu filtres toi-même sur cette colonne.
+Les **postes SWE / software engineer sont retirés** automatiquement.
 
-À chaque re-scan : les nouvelles offres passent `NEW`, les offres toujours là `OPEN` (avec
-`last_seen` rafraîchi), les disparues `CLOSED`. Ta colonne `applied` (suivi de candidatures)
-est préservée d'un scan à l'autre. La couche quant (NUFT) est parsée par
-`quant-internship-scanner/scripts/scan_nuft.py` (testé).
+À chaque re-scan, les nouvelles offres sont ajoutées (avec leur `first_seen`) et les offres déjà
+présentes sont conservées (dédup par company+title+url). **Toutes les sources écrivent le CSV via
+les scripts** (`scan_nuft.py`, `scan_ashby.py`, `scan_addjobs.py`) — jamais à la main, pour éviter
+toute colonne décalée.
 
 ### Avant le premier vrai scan
 
@@ -80,9 +81,10 @@ Vérifie-les (étape 0 du SKILL.md) et passe `verified: true`, ou bascule la fir
 │   ├── commands/
 │   │   └── scan.md
 │   ├── scripts/
-│   │   ├── internship_common.py  # géo (in_europe) + upsert CSV partagés
+│   │   ├── internship_common.py  # nettoyage + filtre SWE + géo + upsert CSV (6 col.)
 │   │   ├── scan_nuft.py          # parseur NUFT (hedge funds quant)
-│   │   └── scan_ashby.py         # parseur Ashby JSON (OpenAI/labos IA)
+│   │   ├── scan_ashby.py         # parseur Ashby JSON (OpenAI/labos IA)
+│   │   └── scan_addjobs.py       # injecte les offres WebSearch (banques/HF) sans dérive
 │   └── skills/
 │       └── scan-internships/
 │           ├── SKILL.md
