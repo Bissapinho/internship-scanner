@@ -24,6 +24,7 @@
     "role_buckets": {
       "bank_quant":   { "priority": 1, "keywords": ["quant", "quantitative analyst", "strats", "structuring", "model validation", "xva", "risk model"], "scope": "Banques (BNP, SocGen, Citi, Barclays, Deutsche Bank, HSBC, JPM, GS, MS...)" },
       "hedge_fund_quant": { "priority": 1, "keywords": ["qr", "qt", "qd", "quantitative research", "quantitative trader", "quantitative developer", "trading"], "scope": "Hedge funds / prop trading" },
+      "data_scientist":   { "priority": 2, "include": ["data scientist", "data science", "machine learning engineer", "ml engineer", "ai engineer"], "exclude_titles": ["research scientist", "applied scientist", "research engineer", "ai researcher", "research intern", "phd research", "quant"], "scope": "Data Scientist / ML Engineer / AI Engineer en boite tech/fintech (Meta, Amazon, Revolut, Spotify...). Roles d'ingenierie a notre portee. PAS de research/applied scientist." },
       "data_science_ai":  { "priority": 3, "keywords": ["data scien", "machine learning", "ml engineer", "ai research", "research scientist", "deep learning"] },
       "data_analyst":     { "priority": 3, "keywords": ["data analyst", "data analytics", "business analyst data"] },
       "consulting_data":  { "priority": 3, "keywords": ["gamma", "bcg x", "quantumblack", "analytics consultant"] }
@@ -94,5 +95,12 @@
       "site:boards.greenhouse.io {company} intern London"
     ],
     "extra_companies": ["Capula", "Aspect Capital", "Qube RT", "XTX Markets", "Man Group", "Marshall Wace", "Millennium (London)", "Balyasny (London)", "BNP Paribas", "Societe Generale", "Natixis", "Credit Agricole CIB", "Barclays", "Deutsche Bank"]
+  },
+
+  "ds_targets": {
+    "_note": "Boites tech/fintech avec stages DATA SCIENTIST en Europe (Londres/Amsterdam/Paris/Berlin/Stockholm/Dublin...). Couche WebSearch: pour chaque, requete '{company} data scientist internship summer 2027 Europe', garder UNIQUEMENT les vrais postes data scientist (filtre --ds-only), puis scan_addjobs.py. Verifie 2026-06: Revolut/Meta/Spotify confirmes.",
+    "query_template": "{company} data scientist internship summer 2027 {city}",
+    "companies": ["Revolut", "Meta", "Amazon", "Spotify", "Booking.com", "Adyen", "Datadog", "Criteo", "Wise", "Monzo", "Klarna", "Zalando", "Delivery Hero", "King", "Doctolib", "Backmarket", "Trainline", "Deliveroo", "Just Eat Takeaway", "N26"],
+    "cities": ["London", "Amsterdam", "Paris", "Berlin", "Stockholm", "Dublin", "Barcelona"]
   }
 }

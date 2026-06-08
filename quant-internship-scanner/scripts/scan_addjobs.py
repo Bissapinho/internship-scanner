@@ -31,6 +31,8 @@ def main():
     ap.add_argument("--sources", default=os.path.join(here, "..", "skills", "scan-internships", "sources.json"))
     ap.add_argument("--source", default="WebSearch")
     ap.add_argument("--today", default=None)
+    ap.add_argument("--ds-only", action="store_true",
+                    help="ne garder que les VRAIS postes data scientist (pas research/applied scientist, ML eng...)")
     a = ap.parse_args()
 
     data = json.load(open(a.json, encoding="utf-8"))
@@ -38,6 +40,9 @@ def main():
         data = data.get("jobs", [])
     rows = [{"company": d.get("company", ""), "title": d.get("title", ""),
              "location": d.get("location", ""), "url": d.get("url", "")} for d in data]
+    if a.ds_only:
+        kw = ic.load_keywords(a.sources)
+        rows = [r for r in rows if ic.is_data_scientist(r["title"], kw)]
     ic.print_stats(a.source, ic.commit(rows, a.csv, a.sources, a.today))
 
 if __name__ == "__main__":

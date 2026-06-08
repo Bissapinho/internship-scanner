@@ -89,6 +89,18 @@ def is_internship(title, keywords):
     t = (title or "").lower()
     return any(k.lower() in t for k in types)
 
+def is_data_scientist(title, keywords):
+    """True seulement pour un VRAI poste data scientist (pas research/applied scientist, ML eng...)."""
+    cfg = (keywords.get("role_buckets") or {}).get("data_scientist", {})
+    inc = cfg.get("include") or ["data scientist", "data science"]
+    exc = cfg.get("exclude_titles") or []
+    t = (title or "").lower()
+    if not any(k.lower() in t for k in inc):
+        return False
+    if any(k.lower() in t for k in exc):
+        return False
+    return True
+
 # ---------- CSV upsert (dedup, conserve first_seen) ----------
 def load_csv(path):
     if not os.path.exists(path):
