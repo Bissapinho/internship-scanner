@@ -45,7 +45,8 @@ def clean(rows):
             continue
         r["company"] = company
         r["title"] = title
-        r["location"] = _norm(r.get("location"))
+        # virgules -> ' / ' pour qu'une location multi-villes ne decale jamais les colonnes
+        r["location"] = re.sub(r"\s*,\s*", " / ", _norm(r.get("location")))
         r["url"] = url
         out.append(r)
     return out
@@ -60,18 +61,19 @@ def load_geo(sources_path):
     return load_keywords(sources_path).get("geo")
 
 def europe_label(location, geo):
-    """yes / no / ? — derive de la localisation, n'exclut rien."""
+    """yes / no / ? — derive de la localisation. INCLUSION d'abord : si une ville/region
+    europeenne est presente (meme parmi plusieurs villes), c'est 'yes'."""
     if not geo:
         return "?"
     loc = (location or "").lower().strip()
     if not loc:
         return "?"
-    for t in geo.get("exclude", []):
-        if t.lower() in loc:
-            return "no"
     for t in geo.get("include_cities", []) + geo.get("include_regions", []):
         if t.lower() in loc:
             return "yes"
+    for t in geo.get("exclude", []):
+        if t.lower() in loc:
+            return "no"
     return "?"
 
 def annotate(rows, geo):
