@@ -167,7 +167,8 @@ Tous les scripts appliquent automatiquement : nettoyage, **filtre SWE** (postes 
 supprimés), annotation `in_europe`, upsert. Aucun accès réseau dans les scripts.
 
 Après tous les scripts, **résous les `in_europe == "?"`** restants en relisant le CSV et en
-corrigeant avec ta connaissance géo (ne touche qu'aux `?`). Puis présente le fichier
+corrigeant avec ta connaissance géo (ne touche qu'aux `?`). Si tu réécris le CSV, utilise un
+writer CSV (préserve les guillemets) — n'édite jamais le texte brut à la main. Puis présente le fichier
 (`mcp__cowork__present_files`) et donne le récap (`+N nouveaux`, total, sources en échec).
 Tôt dans le cycle, peu d'offres sont ouvertes — un résultat maigre est normal.
 
