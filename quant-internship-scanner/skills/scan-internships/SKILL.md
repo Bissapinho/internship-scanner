@@ -91,6 +91,22 @@ Rassemble ces offres dans un fichier JSON (`jobs.json`, liste de `{company, titl
 puis injecte-les via `scan_addjobs.py` (voir Étape 6). **N'écris jamais ces lignes dans le CSV à
 la main** — c'est la cause n°1 des colonnes décalées.
 
+### Couche Data Scientist / ML & AI Engineer (grosses boîtes tech/fintech, Europe)
+
+Pour des stages **Data Scientist, ML Engineer ou AI Engineer** (rôles d'ingénierie à notre portée —
+PAS research/applied scientist, PAS AI researcher) : parcours `ds_targets.companies` (Revolut, Meta,
+Amazon, Spotify, Booking, Adyen, Wise…). Pour chaque, lance des `WebSearch`
+`{company} data scientist OR machine learning engineer OR AI engineer internship summer 2027 {city}`
+(villes EU de `ds_targets.cities`). Garde les postes pertinents en Europe, rassemble-les dans un
+`jobs_ds.json`, puis :
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_addjobs.py jobs_ds.json <dossier_user>/stages_quant_ds.csv \
+    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json --source "WebSearch DS" --ds-only
+```
+Le flag `--ds-only` filtre déterministiquement : il garde data scientist / ML engineer / AI engineer
+et rejette research scientist, applied scientist, research engineer, AI researcher, quant (voir
+`role_buckets.data_scientist`). Tu peux donc ratisser large à la recherche, le script fait le tri.
+
 ---
 
 ## Étape 5 — Filtrage (Europe + priorité banque/HF)

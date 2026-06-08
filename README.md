@@ -11,8 +11,11 @@ Scanne les ouvertures de **stages d'été** (summer internships) et exporte les 
   Deutsche Bank, HSBC, JPMorgan EMEA) — quant / strats / model validation / XVA.
 - **PRIORITÉ 1 — hedge_fund_quant** : QR / QT / QD en hedge funds (G-Research, Marshall Wace,
   Man Group, Qube/QRT, Capula, Aspect, + bureaux EU de Citadel, DE Shaw, Point72, Jane Street…).
-- **Secondaire — data_science_ai / data_analyst / consulting_data** : DS/ML (DeepMind, OpenAI…),
-  data analyst, labos data des cabinets — inclus seulement après la finance.
+- **data_scientist** : stages **Data Scientist / ML Engineer / AI Engineer** en grosse boîte
+  tech/fintech Europe (Revolut, Meta, Amazon, Spotify, Booking, Adyen, Wise…) — rôles d'ingénierie ;
+  research/applied scientist & AI researcher exclus via `scan_addjobs.py --ds-only`.
+- **Secondaire — data_science_ai / data_analyst / consulting_data** : DS/ML avancé (DeepMind,
+  OpenAI…), data analyst, labos data des cabinets.
 
 Les offres hors Europe ne sont **pas supprimées** : elles sont marquées `in_europe = no` (US/Asie)
 ou `?` (inconnu), pour que tu puisses filtrer selon ton besoin.
