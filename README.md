@@ -87,7 +87,8 @@ Vérifie-les (étape 0 du SKILL.md) et passe `verified: true`, ou bascule la fir
 │   │   ├── internship_common.py  # nettoyage + filtre SWE + géo + upsert CSV (6 col.)
 │   │   ├── scan_nuft.py          # parseur NUFT (hedge funds quant)
 │   │   ├── scan_ashby.py         # parseur Ashby JSON (OpenAI/labos IA)
-│   │   └── scan_addjobs.py       # injecte les offres WebSearch (banques/HF) sans dérive
+│   │   ├── scan_addjobs.py       # injecte les offres WebSearch (banques/HF/DS) sans dérive
+│   │   └── finalize.py           # normalisation finale: dé-virgule, recalcule in_europe, dédup
 │   └── skills/
 │       └── scan-internships/
 │           ├── SKILL.md
