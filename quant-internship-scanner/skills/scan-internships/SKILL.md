@@ -190,6 +190,29 @@ Tôt dans le cycle, peu d'offres sont ouvertes — un résultat maigre est norma
 
 ---
 
+## Étape 7 — Vérification des liens (anti-offres mortes)
+
+Avant de retenir une offre trouvée par WebSearch, **`web_fetch` son URL** et lis la page :
+
+- **Écarte-la** si la page indique clairement qu'elle est fermée : « position has been filled »,
+  « no longer accepting applications », « no longer available », « applications closed »,
+  « this role has expired », ou page **404 / introuvable**.
+- **Garde-la** si la page est vivante, OU si elle est **injoignable / timeout / ambiguë** — on ne
+  supprime jamais une offre sur un simple échec de chargement (sinon on perd des offres valides).
+
+N'ajoute dans les `jobs_*.json` (pour `scan_addjobs.py`) que des offres vérifiées vivantes.
+
+## Étape 8 — Finalisation déterministe (TOUJOURS en dernier)
+
+Quoi qu'il arrive, termine par :
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/finalize.py <dossier_user>/stages_quant_ds.csv \
+    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json
+```
+`finalize.py` relit le CSV (peu importe comment les lignes y sont entrées), **dé-virgule** la
+location, **recalcule `in_europe`**, retire les SWE et les doublons. C'est le filet qui garantit un
+CSV propre même si une ligne a été ajoutée à la main.
+
 ## Notes de robustesse
 
 - **Indépendance des couches** : une exception sur une source ne doit jamais arrêter le scan.
