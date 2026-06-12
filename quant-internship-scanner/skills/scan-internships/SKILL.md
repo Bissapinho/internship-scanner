@@ -1,223 +1,147 @@
 ---
 name: scan-internships
-description: Scanne les ouvertures de stages d'été (summer internships) en data science et quantitative finance chez les grandes firmes (D.E. Shaw, Citadel, QuantumBlack, Jane Street, HRT, etc.) et exporte les offres trouvées dans un fichier CSV. À utiliser quand l'utilisateur veut chercher, lister ou suivre des offres de stage quant / data science.
+description: Scanne (cadence bimensuelle, 2x/mois) les stages d'ete quant (QR/QT/QD), data science poussee et finance quant en EUROPE, en NAVIGUANT de reference en reference (crawler borne depth-2) a partir de repos/boards, puis en injectant les offres dans un CSV canonique. A utiliser quand l'utilisateur veut chercher, decouvrir, lister ou suivre des stages quant / data science.
 ---
 
-# Scan Internships — Stages quant & data science
+# Scan Internships — Stages quant & data science (v0.2, crawler + bimensuel)
 
-Ce skill collecte les offres de **stages d'été** (summer internships) en **data science** et
-**quantitative finance**, puis les écrit dans un **CSV**.
+Ce skill **decouvre** et collecte les offres de **stages d'ete** en **quant (QR/QT/QD)**,
+**finance quant** et **data science poussee**, puis les ecrit dans un **CSV canonique unique**
+(`stages_quant_ds.csv`). Cadence cible : **2x par mois** (bimensuel), pas hebdomadaire.
 
-L'architecture est **hybride et à couches indépendantes** : si une couche échoue, les autres
-continuent. On privilégie toujours la couche la plus fiable (API) avant de tomber sur le browsing.
+**Nouveaute clef vs v0.1 :** le plugin ne se contente plus d'une liste figee. Il **navigue de
+reference en reference** : il part de pages-seed riches en liens (repos agregateurs, boards),
+en extrait des liens vers de **nouvelles firmes / job boards**, les suit (profondeur **bornee a
+2 sauts**, domaines en allowlist), et en tire des offres. Decouverte large mais maitrisee.
 
-Les sources et mots-clés vivent dans `sources.json` (même dossier). **Lis ce fichier en premier.**
+Architecture **hybride, a couches independantes** : si une couche echoue, les autres continuent.
+On privilegie la couche la plus fiable (API/repos) avant le browsing. Les sources, mots-cles et
+config du crawler vivent dans `sources.json` (meme dossier). **Lis-le en premier.**
 
----
+**Schema CSV de sortie (9 colonnes, ecrit UNIQUEMENT par les scripts) :**
+```
+company,title,location,in_europe,bucket,source,url,first_seen,last_seen
+```
+`bucket` ∈ {bank_quant, hedge_fund_quant, data_scientist, data_science_ai, data_analyst, consulting_data}.
+`in_europe` ∈ {yes,no,?}. `last_seen` est rafraichi a chaque scan → sert a reperer les offres fermees.
 
-## Étape 0 — (à faire une fois) Vérifier les slugs
+**Filtre TITRE (strict) :** on ne garde QUE des stages/internships. Gardes : intern, internship,
+stage, summer (un « summer analyst » de banque EST un stage). **Rejetes en dur** par les scripts :
+apprenticeship / apprenti / alternance / work-study, et les postes graduate / new grad qui ne sont
+pas aussi des stages, ainsi que SWE. **Le CSV doit vivre dans un dossier connecte a Cowork.**
 
-Les `slug` des `api_sources` sont des **hypothèses**. Avant le premier vrai scan, vérifie chacun :
-
-- Greenhouse : `https://boards-api.greenhouse.io/v1/boards/{slug}/jobs`
-- Lever : `https://api.lever.co/v0/postings/{slug}?mode=json`
-
-Si l'URL renvoie une liste de jobs → mets `"verified": true` dans `sources.json`.
-Si elle renvoie 404 → le slug est faux : cherche le bon (WebSearch `{company} greenhouse OR lever careers`)
-ou bascule la firme dans `browse_sources`.
-
----
-
-## Étape 1 — Couche Agrégateurs (LA PLUS RENTABLE, à faire en premier)
-
-Avant toute chose, exploite `aggregator_sources` : des listes déjà curées (repos GitHub maintenus +
-boards quant/finance) qui couvrent d'un coup QR/QT/QD, data analyst, data science/AI et le consulting data.
-
-- `type: github_nuft` (NUFT) → **quant-only**. Le README n'est PAS un tableau plat : c'est une
-  section `## Firme` par entreprise, avec une sous-table `|Role|Links|`. **Beaucoup de sections
-  sont vides** tant que le rôle n'est pas ouvert — ignore-les. Source plus propre : les fichiers
-  `./data/*.yml` du repo. (Vérifié juin 2026 : branche `main` OK.)
-- `type: github_readme` (Simplify, vanshb03) → gros README (≈70 Ko), **pagine** la lecture
-  (offset/limit) ou grep les lignes contenant tes mots-clés. Tableau plat
-  Company / Role / Location / Link. Si 404 : la branche a changé (essaie `main` ↔ `dev`).
-- **Saisonnalité** : tôt dans le cycle (été → automne) la plupart des firmes n'ont pas encore
-  ouvert (Jane Street ouvre en juillet, Two Sigma en août). Un résultat quasi vide est normal,
-  pas une erreur — signale-le dans le récap.
-- `type: browse` (OpenQuant, The Trackr, AlumnEye) → rendu JS, passe par Claude in Chrome (étape 3).
-
-Classe chaque offre dans un `role_bucket` (`keywords.role_buckets`) : `quant_finance`, `data_analyst`,
-`data_science_ai`, `consulting_data`. Ce bucket ira dans le CSV.
-
-## Étape 2 — Couche API (Greenhouse / Lever, rapide et fiable)
-
-Pour chaque entrée de `api_sources`, récupère le JSON via la couche réseau autorisée.
-
-**Greenhouse** — `GET https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true`
-Chaque job : `title`, `location.name`, `absolute_url`, `updated_at`.
-
-**Lever** — `GET https://api.lever.co/v0/postings/{slug}?mode=json`
-Chaque job : `text` (titre), `categories.location`, `hostedUrl`, `createdAt`.
-
-Ces endpoints sont du JSON public : utilise `mcp__workspace__web_fetch`. Si bloqué, NE PAS
-contourner par curl/python — passe la source en échec et continue.
+> Chemins : `R = ${CLAUDE_PLUGIN_ROOT}`, `S = $R/skills/scan-internships/sources.json`,
+> `OUT = <dossier_user>/stages_quant_ds.csv`. **Tous les scripts sont sans reseau** : Claude fetch,
+> les scripts parsent/ecrivent. **N'ecris JAMAIS le CSV a la main** (cause n°1 de colonnes decalees).
 
 ---
 
-## Étape 3 — Couche Browse (Claude in Chrome, pour sites JS / sans API)
+## Etape 1 — Couche DECOUVERTE (crawler "de reference en reference")
 
-Pour chaque entrée de `browse_sources`, utilise les outils **Claude in Chrome** :
-`mcp__Claude_in_Chrome__navigate` puis `mcp__Claude_in_Chrome__get_page_text` (rend le JS,
-contrairement à web_fetch). Applique les filtres décrits dans le champ `note` de chaque source.
+C'est le moteur central. Profondeur **max 2 sauts** (`crawl.max_depth`).
 
-- Cette couche est **plus lente et plus fragile** : exige un navigateur connecté. Traite-la
-  après l'API. Si Chrome n'est pas dispo, **saute cette couche** et note-le dans le rapport
-  final — ne bloque jamais le scan entier.
-- **AlumnEye** est précieux surtout pour les *dates de campagnes* (ouverture/fermeture des
-  summers) des écoles de commerce FR. Récupère ces dates si présentes.
+**Hop 0 — seeds.** Pour chaque page de `crawl_seeds.pages`, fetch-la :
+- repos GitHub / pages texte → `mcp__workspace__web_fetch` (README brut).
+- boards a rendu JS (OpenQuant, The Trackr) → **Claude in Chrome** (`navigate` + `get_page_text`).
+Ecris chaque page dans un fichier local (`seed1.html`, `seed2.md`...).
+
+**Extraction des candidats.** Lance le crawler sur les pages recuperees :
+```
+python $R/scripts/crawl_seeds.py seed1.html seed2.md --out queue.json \
+    --csv OUT --sources S --found-on "<url_seed>" --max 60
+```
+→ `queue.json` = liste filtree `{url, kind, domain, company_guess, found_on}`. Le script :
+- ne garde que les **domaines ATS de confiance** (greenhouse/lever/ashby/workday/...) + (option
+  `--include-careers`) les pages "careers",
+- **ignore le bruit** (LinkedIn, Indeed, reseaux sociaux) et les **domaines deja dans le CSV**,
+- devine l'entreprise depuis le slug/anchor.
+
+**Hop 1 — suivre les candidats.** Pour chaque entree de `queue.json` (priorise `kind: ats_board`
+et `job_posting`), fetch l'URL (web_fetch pour les API/JSON ATS ; Chrome pour le HTML JS). Extrais
+les offres en `{company, title, location, url}`. Si une page liste encore d'autres boards et qu'on
+est **a moins de 2 sauts**, tu peux relancer `crawl_seeds.py` dessus (**hop 2 = profondeur max,
+on s'arrete**).
+
+**Injection.** Rassemble les offres trouvees dans un JSON et upsert-les (jamais a la main) :
+```
+python $R/scripts/scan_addjobs.py crawl_jobs.json OUT --sources S --source "Crawl:<domaine>"
+```
+
+> Borne stricte : ne JAMAIS suivre un lien au-dela de 2 sauts depuis une seed, ni un domaine hors
+> allowlist `crawl.ats_domains`. C'est ce qui empeche le crawler de partir dans tous les sens.
+
+## Etape 2 — Couche Repos/Agregateurs (rentable, structuree)
+
+- **NUFT** (`github_nuft`, quant-only) : fetch le README brut → `nuft.md` → puis
+  ```
+  python $R/scripts/scan_nuft.py nuft.md OUT --sources S --bucket hedge_fund_quant --source "NUFT 2027"
+  ```
+  Structure = section `## Firme` + sous-table `|Role|Links|`. Sections vides = pas de role ouvert (normal).
+- Autres `github_readme` (Simplify, vanshb03, LorenzoLaCorte) : gros README, **pagine** la lecture
+  ou grep tes mots-cles. Rassemble en JSON → `scan_addjobs.py ... --source "<repo>"`.
+- **Saisonnalite** : tot dans le cycle (ete→automne) la plupart des firmes n'ont pas ouvert
+  (Jane Street ouvre en juillet, Two Sigma en aout). Un resultat maigre est NORMAL — signale-le.
+
+## Etape 3 — Couche API (Greenhouse / Lever / Ashby, GET sans auth)
+
+Pour chaque `api_sources`, recupere le JSON via `mcp__workspace__web_fetch` :
+- **Greenhouse** : `https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true`
+- **Lever** : `https://api.lever.co/v0/postings/{slug}?mode=json`
+- **Ashby** : `https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true`
+  → ecris la reponse en fichier → `scan_ashby.py ashby.json OUT --company "OpenAI" --sources S`.
+Si un endpoint timeout : **note-le, passe la source en echec, continue** (jamais de curl/python requests).
+
+## Etape 4 — Couche WebSearch (banques + hedge funds Europe, + DS pousse)
+
+LE moteur pour les cibles prioritaires souvent injoignables (DE Shaw, BNP, SocGen, G-Research,
+Marshall Wace...) et pour les `ds_targets`. Pour chaque firme/`search_fallback.query_templates`,
+lance une `WebSearch` (ajoute un terme geo Europe). **Garde uniquement les liens d'offre reelle**
+(page d'application), jamais articles/agregateurs, **jamais d'URL inventee**. Rassemble en JSON →
+```
+python $R/scripts/scan_addjobs.py jobs.json OUT --sources S --source "WebSearch"
+# DS pur (filtre deterministe data scientist / ML / AI eng, rejette research/applied scientist) :
+python $R/scripts/scan_addjobs.py jobs_ds.json OUT --sources S --source "WebSearch DS" --ds-only
+```
+
+## Etape 5 — Browse cible (Chrome, sites JS sans API)
+
+Pour les `browse_sources` non couverts par l'API/crawl, utilise **Claude in Chrome**
+(`navigate` + `get_page_text`, qui rend le JS). Couche plus lente/fragile : apres l'API. Si Chrome
+indisponible, **saute** et note-le. AlumnEye = surtout pour les **dates de campagnes** FR.
 
 ---
 
-## Étape 4 — Couche WebSearch (LE moteur pour banques + hedge funds Europe)
+## Etape 6 — Resolution geo + finalisation
 
-C'est la couche la plus importante pour les cibles prioritaires (DE Shaw, BNP, SocGen, G-Research,
-Marshall Wace…), dont les sites propres sont souvent injoignables et qui ne sont pas dans les repos.
+Les scripts annotent `in_europe` et classent `bucket` automatiquement. Apres tous les scripts :
+**resous les `in_europe == "?"`** restants en relisant le CSV et en corrigeant avec ta connaissance
+geo (ex. « Santa Clara » → no, « Munich » → yes). Ne touche QU'AUX `?`. Si tu reecris, utilise un
+writer CSV — jamais d'edition texte brute.
 
-Pour chaque firme prioritaire / `search_fallback.extra_companies`, lance une `WebSearch` avec les
-`query_templates` (ajoute un terme géo Europe). Garde uniquement les liens menant à une **offre
-réelle** (page d'application), jamais des articles ou agrégateurs génériques. **Vérifie que l'URL
-n'est pas factice** (pas d'URL inventée — uniquement celles réellement renvoyées par la recherche).
+## Etape 7 — Format + verif (chaine complete)
 
-Rassemble ces offres dans un fichier JSON (`jobs.json`, liste de `{company, title, location, url}`),
-puis injecte-les via `scan_addjobs.py` (voir Étape 6). **N'écris jamais ces lignes dans le CSV à
-la main** — c'est la cause n°1 des colonnes décalées.
+Apres le scan, enchaine les deux autres skills du plugin :
+1. **`verify-links`** : `python $R/scripts/verify_links.py OUT --sources S --report verif.md`
+   (doublons, liens suspects, offres perimees). Pour tester les liens morts en HTTP, vois ce skill.
+2. **`format-xlsx`** : `python $R/scripts/format_xlsx.py OUT <dossier_user>/stages_quant_ds.xlsx`
+   → classeur Excel mis en forme (onglets Toutes / Europe / Finance quant / Resume).
 
-### Couche Data Scientist / ML & AI Engineer (grosses boîtes tech/fintech, Europe)
-
-Pour des stages **Data Scientist, ML Engineer ou AI Engineer** (rôles d'ingénierie à notre portée —
-PAS research/applied scientist, PAS AI researcher) : parcours `ds_targets.companies` (Revolut, Meta,
-Amazon, Spotify, Booking, Adyen, Wise…). Pour chaque, lance des `WebSearch`
-`{company} data scientist OR machine learning engineer OR AI engineer internship summer 2027 {city}`
-(villes EU de `ds_targets.cities`). Garde les postes pertinents en Europe, rassemble-les dans un
-`jobs_ds.json`, puis :
-```
-python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_addjobs.py jobs_ds.json <dossier_user>/stages_quant_ds.csv \
-    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json --source "WebSearch DS" --ds-only
-```
-Le flag `--ds-only` filtre déterministiquement : il garde data scientist / ML engineer / AI engineer
-et rejette research scientist, applied scientist, research engineer, AI researcher, quant (voir
-`role_buckets.data_scientist`). Tu peux donc ratisser large à la recherche, le script fait le tri.
+Presente le `.xlsx` (`mcp__cowork__present_files`) et donne le recap : `+N nouveaux`, total,
+repartition par bucket, sources en echec.
 
 ---
 
-## Étape 5 — Filtrage (Europe + priorité banque/HF)
+## Cadence bimensuelle (2x/mois)
 
-Garde une offre seulement si les TROIS conditions sont vraies :
+Ce workflow est concu pour tourner **2 fois par mois** (planifiable plus tard via une scheduled
+task — l'utilisateur la posera lui-meme). En mode planifie non-interactif : les couches
+crawl(web_fetch)/repos/API/WebSearch tournent seules ; la couche **Chrome necessite une session
+active** → si absente, saute-la et signale-le. Le CSV est persistant : `last_seen` permet de voir
+ce qui n'est plus reapparu (offres probablement fermees, reperees par `verify-links`).
 
-1. **Titre** : contient un mot de `keywords.include_title` **ET** un mot de `keywords.include_type`.
-   **Les postes SWE / software engineer sont exclus automatiquement par les scripts.**
-2. **GÉO — colonne `in_europe` (ne rien exclure)** : dérive `in_europe` de la localisation via
-   `keywords.geo` → `"yes"` si elle matche `include_cities`/`include_regions`, `"no"` si elle
-   matche `exclude` (US/Asie), `"?"` si inconnue. **Garde TOUTES les offres** ; l'utilisateur
-   filtre ensuite sur cette colonne dans le CSV.
+## Robustesse
 
-   **Résolution agentique des `?`** : le matching par sous-chaîne ne reconnaît pas tout (codes
-   d'État US, villes inconnues). Après le scan, relis les lignes `in_europe == "?"` et corrige-les
-   en `yes`/`no` avec ta propre connaissance géographique (ex. « Santa Clara » → no, « Munich » →
-   yes), puis réécris le CSV. Ne touche qu'aux `?`, laisse les `yes`/`no` du script.
-3. **Année** : correspond à `target_year` (ou prochaine campagne d'été évidente). Si absente,
-   garde et marque `year = "à confirmer"`.
-
-**Priorité** : les buckets `bank_quant` et `hedge_fund_quant` (priority 1) passent en tête.
-`data_science_ai`, `data_analyst`, `consulting_data` (priority 3) sont secondaires — inclus
-seulement après, jamais au détriment des offres finance.
-
-**Nettoyage automatique (fait par les scripts via `internship_common.clean`)** : normalisation des
-espaces, suppression des lignes **sans entreprise** / sans titre / sans url, et **suppression des
-postes SWE / software engineer**.
-
-**Déduplique** par (entreprise + titre + url).
-
----
-
-## Étape 6 — Sortie CSV (UPSERT dans un fichier unique persistant)
-
-**Règle clé : on ne recrée JAMAIS un nouveau CSV.** Le scan met à jour **un seul fichier
-persistant** dans le dossier de l'utilisateur : `stages_quant_ds.csv` (sans date dans le nom).
-
-En-tête EXACT (6 colonnes, rien d'autre) :
-
-```
-company,title,location,in_europe,url,first_seen
-```
-
-`in_europe` ∈ {yes, no, ?}. Upsert (clé = `company` + `title` + `url`) : offre nouvelle → ajoutée
-avec `first_seen` = aujourd'hui ; offre déjà présente → conservée (on garde son `first_seen`).
-Dédup par cette clé.
-
-### ⚠️ RÈGLE ABSOLUE — n'écris JAMAIS le CSV à la main
-
-Toutes les sources (NUFT, Ashby, **et surtout WebSearch**) passent par les scripts du plugin, qui
-sont les SEULS à écrire le CSV. Écrire ou éditer le CSV toi-même provoque des colonnes décalées
-(« oui » dans url, ville dans in_europe, etc.). Donc :
-
-**NUFT** : `web_fetch` le README brut → fichier `nuft.md` → puis
-```
-python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_nuft.py nuft.md <dossier_user>/stages_quant_ds.csv \
-    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json
-```
-
-**Ashby (OpenAI/labos)** : `web_fetch` le JSON → fichier `ashby.json` → puis
-```
-python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_ashby.py ashby.json <dossier_user>/stages_quant_ds.csv \
-    --company "OpenAI" --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json
-```
-
-**WebSearch** (banques + hedge funds Europe) : rassemble les offres trouvées dans un fichier JSON
-(liste d'objets `{company, title, location, url}`) → puis
-```
-python ${CLAUDE_PLUGIN_ROOT}/scripts/scan_addjobs.py jobs.json <dossier_user>/stages_quant_ds.csv \
-    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json --source "WebSearch"
-```
-
-Tous les scripts appliquent automatiquement : nettoyage, **filtre SWE** (postes software engineer
-supprimés), annotation `in_europe`, upsert. Aucun accès réseau dans les scripts.
-
-Après tous les scripts, **résous les `in_europe == "?"`** restants en relisant le CSV et en
-corrigeant avec ta connaissance géo (ne touche qu'aux `?`). Si tu réécris le CSV, utilise un
-writer CSV (préserve les guillemets) — n'édite jamais le texte brut à la main. Puis présente le fichier
-(`mcp__cowork__present_files`) et donne le récap (`+N nouveaux`, total, sources en échec).
-Tôt dans le cycle, peu d'offres sont ouvertes — un résultat maigre est normal.
-
----
-
-## Étape 7 — Vérification des liens (anti-offres mortes)
-
-Avant de retenir une offre trouvée par WebSearch, **`web_fetch` son URL** et lis la page :
-
-- **Écarte-la** si la page indique clairement qu'elle est fermée : « position has been filled »,
-  « no longer accepting applications », « no longer available », « applications closed »,
-  « this role has expired », ou page **404 / introuvable**.
-- **Garde-la** si la page est vivante, OU si elle est **injoignable / timeout / ambiguë** — on ne
-  supprime jamais une offre sur un simple échec de chargement (sinon on perd des offres valides).
-
-N'ajoute dans les `jobs_*.json` (pour `scan_addjobs.py`) que des offres vérifiées vivantes.
-
-## Étape 8 — Finalisation déterministe (TOUJOURS en dernier)
-
-Quoi qu'il arrive, termine par :
-```
-python ${CLAUDE_PLUGIN_ROOT}/scripts/finalize.py <dossier_user>/stages_quant_ds.csv \
-    --sources ${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json
-```
-`finalize.py` relit le CSV (peu importe comment les lignes y sont entrées), **dé-virgule** la
-location, **recalcule `in_europe`**, retire les SWE et les doublons. C'est le filet qui garantit un
-CSV propre même si une ligne a été ajoutée à la main.
-
-## Notes de robustesse
-
-- **Indépendance des couches** : une exception sur une source ne doit jamais arrêter le scan.
-  Enveloppe chaque source, logue l'échec, continue.
-- **Pas de contournement réseau** : si web_fetch/WebSearch est bloqué, signale-le, ne passe pas
-  par curl/wget/python requests.
-- **Évolution** : une fois le CSV validé, ce même workflow peut tourner en *scheduled task*
-  quotidienne (la couche API tourne seule ; la couche Chrome nécessite une session active).
+- **Independance des couches** : une exception sur une source n'arrete jamais le scan. Logue, continue.
+- **Pas de contournement reseau** : si web_fetch/WebSearch bloque, signale-le, ne passe pas par curl/requests.
+- **Borne du crawler** : depth ≤ 2, allowlist ATS uniquement. Ne jamais ratisser hors de ce cadre.
+- **Un seul CSV, jamais recree** : upsert par cle (company+title+url), `first_seen` conserve.

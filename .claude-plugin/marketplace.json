@@ -12,7 +12,7 @@
     {
       "name": "quant-internship-scanner",
       "source": "./quant-internship-scanner",
-      "description": "Scanne les offres de stage d'été (summer internships) en data science et quantitative finance chez les grandes firmes."
+      "description": "Scanne (2x/mois) les stages quant QR/QT/QD & data science en Europe en naviguant de reference en reference (crawler borne), stocke dans un CSV canonique, le formate en Excel et verifie liens/doublons."
     }
   ]
 }

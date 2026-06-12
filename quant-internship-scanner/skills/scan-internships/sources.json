@@ -1,92 +1,598 @@
 {
-  "_comment": "Sources curees. ORDRE DE PRIORITE: aggregator_sources (le plus rentable, repos/boards structures) > api_sources (Greenhouse/Lever/Ashby, GET sans auth) > browse_sources (Chrome, sites JS) > search_fallback. Les slugs api sont des HYPOTHESES a verifier (SKILL.md etape 0). Voir _api_note pour les endpoints exacts et la joignabilite testee.",
-
-  "_priority": "PRIORITE = quant en banque/finance: (1) hedge funds QR/QT/QD, (2) quant en banques (BNP, SocGen, Citi, Barclays, DB, HSBC...). Les buckets data_science_ai / data_analyst / consulting_data sont SECONDAIRES. FILTRE DUR: ne garder QUE les offres en EUROPE (voir keywords.geo) - rejeter toute offre US/Asie.",
-
+  "_comment": "Sources curees + moteur de DECOUVERTE. ORDRE: crawl_seeds (decouverte de reference en reference) & aggregator_sources (repos/boards structures) > api_sources (Greenhouse/Lever/Ashby GET sans auth) > browse_sources (Chrome, sites JS) > search_fallback. Cadence cible = BIMENSUELLE (2x/mois). Les slugs api sont des HYPOTHESES a verifier. Voir _api_note.",
+  "_priority": "PRIORITE = quant en banque/finance: (1) hedge funds QR/QT/QD, (2) quant en banques (BNP, SocGen, Citi, Barclays, DB, HSBC...). Buckets data_science_ai / data_analyst / consulting_data SECONDAIRES. GEO: garder TOUTES les offres mais annoter in_europe (l'utilisateur filtre ensuite); priorite Europe.",
   "keywords": {
     "include_title": [
-      "quant", "quantitative", "qr", "qt", "qd",
-      "quantitative analyst", "quantitative researcher", "quantitative trader", "quantitative developer",
-      "strats", "structuring", "model validation", "xva", "risk model",
-      "data scien", "data analyst", "machine learning", "ml engineer", "research scientist"
+      "quant",
+      "quantitative",
+      "qr",
+      "qt",
+      "qd",
+      "quantitative analyst",
+      "quantitative researcher",
+      "quantitative trader",
+      "quantitative developer",
+      "strats",
+      "structuring",
+      "model validation",
+      "xva",
+      "risk model",
+      "data scien",
+      "data analyst",
+      "machine learning",
+      "ml engineer",
+      "research scientist"
     ],
-    "include_type": ["intern", "stage", "summer", "graduate", "campus", "off-cycle", "placement", "apprenti", "alternance"],
+    "include_type": [
+      "intern",
+      "internship",
+      "stage",
+      "stagiaire",
+      "summer"
+    ],
     "target_year": 2027,
-    "year_hints": ["2027", "summer 2027", "ete 2027", "off-cycle"],
-
+    "year_hints": [
+      "2027",
+      "summer 2027",
+      "ete 2027",
+      "off-cycle"
+    ],
     "geo": {
-      "_rule": "FILTRE DUR. Garder une offre seulement si sa localisation matche include OU un pays europeen. Rejeter si elle matche exclude. Si la localisation est inconnue, marquer 'a confirmer' et garder en attente plutot que de la jeter.",
-      "include_cities": ["London", "Londres", "Paris", "Frankfurt", "Amsterdam", "Dublin", "Zurich", "Zürich", "Geneva", "Geneve", "Madrid", "Milan", "Milano", "Luxembourg", "Brussels", "Bruxelles", "Stockholm", "Copenhagen", "Warsaw", "Lisbon", "Munich", "Berlin", "Edinburgh"],
-      "include_regions": ["Europe", "EMEA", "EU", "United Kingdom", "UK", "France", "Germany", "Netherlands", "Ireland", "Switzerland", "Spain", "Italy", "Belgium", "Sweden", "Luxembourg", "Poland", "Portugal"],
-      "exclude": ["United States", "USA", "US-", "Remote US", "Remote, US", "New York", "NYC", "Chicago", "Boston", "Houston", "Austin", "Miami", "San Francisco", "Bay Area", "Seattle", "Greenwich", "Bala Cynwyd", "Setauket", "Jupiter", "Berkeley", "Santa Clara", "San Jose", "Sunnyvale", "Mountain View", "Menlo Park", "Palo Alto", "Redmond", "Bellevue", "Cambridge, MA", "Atlanta", "Dallas", "Denver", "Los Angeles", "San Diego", "Madison", "Pittsburgh", "California", "Texas", "Massachusetts", "Washington", "Pennsylvania", "New Jersey", "Illinois", "Singapore", "Hong Kong", "Tokyo", "Mumbai", "Bangalore", "Shanghai", "Beijing", "Sydney", "Toronto"]
+      "_rule": "Annoter in_europe (yes/no/?). Ne rien jeter automatiquement; l'utilisateur filtre sur la colonne.",
+      "include_cities": [
+        "London",
+        "Londres",
+        "Paris",
+        "Frankfurt",
+        "Amsterdam",
+        "Dublin",
+        "Zurich",
+        "Zürich",
+        "Geneva",
+        "Geneve",
+        "Madrid",
+        "Milan",
+        "Milano",
+        "Luxembourg",
+        "Brussels",
+        "Bruxelles",
+        "Stockholm",
+        "Copenhagen",
+        "Warsaw",
+        "Lisbon",
+        "Munich",
+        "Berlin",
+        "Edinburgh"
+      ],
+      "include_regions": [
+        "Europe",
+        "EMEA",
+        "EU",
+        "United Kingdom",
+        "UK",
+        "France",
+        "Germany",
+        "Netherlands",
+        "Ireland",
+        "Switzerland",
+        "Spain",
+        "Italy",
+        "Belgium",
+        "Sweden",
+        "Luxembourg",
+        "Poland",
+        "Portugal"
+      ],
+      "exclude": [
+        "United States",
+        "USA",
+        "US-",
+        "Remote US",
+        "Remote, US",
+        "New York",
+        "NYC",
+        "Chicago",
+        "Boston",
+        "Houston",
+        "Austin",
+        "Miami",
+        "San Francisco",
+        "Bay Area",
+        "Seattle",
+        "Greenwich",
+        "Bala Cynwyd",
+        "Setauket",
+        "Jupiter",
+        "Berkeley",
+        "Santa Clara",
+        "San Jose",
+        "Sunnyvale",
+        "Mountain View",
+        "Menlo Park",
+        "Palo Alto",
+        "Redmond",
+        "Bellevue",
+        "Cambridge, MA",
+        "Atlanta",
+        "Dallas",
+        "Denver",
+        "Los Angeles",
+        "San Diego",
+        "Madison",
+        "Pittsburgh",
+        "California",
+        "Texas",
+        "Massachusetts",
+        "Washington",
+        "Pennsylvania",
+        "New Jersey",
+        "Illinois",
+        "Singapore",
+        "Hong Kong",
+        "Tokyo",
+        "Mumbai",
+        "Bangalore",
+        "Shanghai",
+        "Beijing",
+        "Sydney",
+        "Toronto"
+      ]
     },
-
     "role_buckets": {
-      "bank_quant":   { "priority": 1, "keywords": ["quant", "quantitative analyst", "strats", "structuring", "model validation", "xva", "risk model"], "scope": "Banques (BNP, SocGen, Citi, Barclays, Deutsche Bank, HSBC, JPM, GS, MS...)" },
-      "hedge_fund_quant": { "priority": 1, "keywords": ["qr", "qt", "qd", "quantitative research", "quantitative trader", "quantitative developer", "trading"], "scope": "Hedge funds / prop trading" },
-      "data_scientist":   { "priority": 2, "include": ["data scientist", "data science", "machine learning engineer", "ml engineer", "ai engineer"], "exclude_titles": ["research scientist", "applied scientist", "research engineer", "ai researcher", "research intern", "phd research", "quant"], "scope": "Data Scientist / ML Engineer / AI Engineer en boite tech/fintech (Meta, Amazon, Revolut, Spotify...). Roles d'ingenierie a notre portee. PAS de research/applied scientist." },
-      "data_science_ai":  { "priority": 3, "keywords": ["data scien", "machine learning", "ml engineer", "ai research", "research scientist", "deep learning"] },
-      "data_analyst":     { "priority": 3, "keywords": ["data analyst", "data analytics", "business analyst data"] },
-      "consulting_data":  { "priority": 3, "keywords": ["gamma", "bcg x", "quantumblack", "analytics consultant"] }
-    }
+      "bank_quant": {
+        "priority": 1,
+        "keywords": [
+          "quant",
+          "quantitative analyst",
+          "strats",
+          "structuring",
+          "model validation",
+          "xva",
+          "risk model"
+        ],
+        "scope": "Banques (BNP, SocGen, Citi, Barclays, Deutsche Bank, HSBC, JPM, GS, MS...)"
+      },
+      "hedge_fund_quant": {
+        "priority": 1,
+        "keywords": [
+          "qr",
+          "qt",
+          "qd",
+          "quantitative research",
+          "quantitative trader",
+          "quantitative developer",
+          "trading"
+        ],
+        "scope": "Hedge funds / prop trading"
+      },
+      "data_scientist": {
+        "priority": 2,
+        "keywords": [
+          "data scientist",
+          "data science",
+          "machine learning engineer",
+          "ml engineer",
+          "ai engineer"
+        ],
+        "include": [
+          "data scientist",
+          "data science",
+          "machine learning engineer",
+          "ml engineer",
+          "ai engineer"
+        ],
+        "exclude_titles": [
+          "research scientist",
+          "applied scientist",
+          "research engineer",
+          "ai researcher",
+          "research intern",
+          "phd research",
+          "quant"
+        ],
+        "scope": "Data Scientist / ML Engineer / AI Engineer en boite tech/fintech. Roles d'ingenierie a notre portee. PAS de research/applied scientist."
+      },
+      "data_science_ai": {
+        "priority": 3,
+        "keywords": [
+          "data scien",
+          "machine learning",
+          "ml engineer",
+          "ai research",
+          "research scientist",
+          "deep learning"
+        ]
+      },
+      "data_analyst": {
+        "priority": 3,
+        "keywords": [
+          "data analyst",
+          "data analytics",
+          "business analyst data"
+        ]
+      },
+      "consulting_data": {
+        "priority": 3,
+        "keywords": [
+          "gamma",
+          "bcg x",
+          "quantumblack",
+          "analytics consultant"
+        ]
+      }
+    },
+    "exclude_type": [
+      "apprentice",
+      "apprenticeship",
+      "apprenti",
+      "alternance",
+      "alternant",
+      "work-study",
+      "graduate",
+      "new grad",
+      "grad program",
+      "off-cycle"
+    ],
+    "_title_rule": "On ne garde QUE des stages/internships. Garde: intern/internship/stage/summer (un 'summer analyst' est un stage). Rejette: apprenticeship/alternance ET graduate non-stage. Filtre applique en dur par internship_common.reject_title()."
   },
-
+  "crawl": {
+    "_note": "Config du crawler borne (crawl_seeds.py). Profondeur MAX = 2 sauts depuis une seed. On ne suit QUE des domaines ATS de confiance (pages structurees) + optionnellement des pages 'careers'. deny_domains = bruit a ignorer.",
+    "max_depth": 2,
+    "max_candidates_per_page": 60,
+    "ats_domains": [
+      "boards.greenhouse.io",
+      "job-boards.greenhouse.io",
+      "boards-api.greenhouse.io",
+      "jobs.lever.co",
+      "api.lever.co",
+      "jobs.ashbyhq.com",
+      "api.ashbyhq.com",
+      "myworkdayjobs.com",
+      "smartrecruiters.com",
+      "workable.com",
+      "jobs.workable.com",
+      "eightfold.ai",
+      "icims.com",
+      "teamtailor.com",
+      "personio.com"
+    ],
+    "career_hints": [
+      "career",
+      "careers",
+      "early-careers",
+      "students",
+      "graduate",
+      "graduates",
+      "join-us",
+      "join",
+      "internship",
+      "internships",
+      "jobs",
+      "open-roles",
+      "opportunities",
+      "recruitment",
+      "campus",
+      "stage",
+      "stages",
+      "emplois"
+    ],
+    "deny_domains": [
+      "linkedin.com",
+      "twitter.com",
+      "x.com",
+      "facebook.com",
+      "instagram.com",
+      "youtube.com",
+      "glassdoor.",
+      "indeed.",
+      "google.com",
+      "wikipedia.org",
+      "medium.com",
+      "discord.",
+      "t.me",
+      "mailto:",
+      "tel:"
+    ]
+  },
+  "crawl_seeds": {
+    "_note": "Points de DEPART du crawler (hop 0). Pages riches en liens vers des firmes/boards quant & DS. Claude les fetch, puis crawl_seeds.py en extrait les candidats.",
+    "pages": [
+      {
+        "name": "NUFT 2027 (README)",
+        "url": "https://raw.githubusercontent.com/northwesternfintech/2027QuantInternships/main/README.md",
+        "bucket": "hedge_fund_quant"
+      },
+      {
+        "name": "quant-bobby quant-jobs",
+        "url": "https://raw.githubusercontent.com/quant-bobby/quant-jobs/main/README.md",
+        "bucket": "hedge_fund_quant"
+      },
+      {
+        "name": "LorenzoLaCorte european-tech-internships",
+        "url": "https://raw.githubusercontent.com/LorenzoLaCorte/european-tech-internships-2026/main/README.md",
+        "bucket": "data_science_ai"
+      },
+      {
+        "name": "OpenQuant (board)",
+        "url": "https://openquant.co/?level=Internship",
+        "bucket": "hedge_fund_quant",
+        "note": "rendu JS -> Chrome"
+      },
+      {
+        "name": "The Trackr EU Finance",
+        "url": "https://app.the-trackr.com/eu-finance/",
+        "bucket": "bank_quant",
+        "note": "rendu JS -> Chrome"
+      }
+    ]
+  },
   "aggregator_sources": [
-    { "name": "The Trackr - EU Finance", "type": "browse", "url": "https://app.the-trackr.com/eu-finance/", "bucket": "bank_quant", "priority": 1, "note": "PRIORITAIRE Europe. Couvre banques + hedge funds (summers EU). Rendu JS -> Chrome. Equivalent EU d'AlumnEye." },
-    { "name": "eFinancialCareers - Quant Europe", "type": "browse", "url": "https://www.efinancialcareers.com/jobs/quant-internship/in-europe", "bucket": "bank_quant", "priority": 1, "note": "PRIORITAIRE. Le seul qui agrege les BANQUES (BNP, SocGen, Citi...) + HF en Europe. Rendu JS -> Chrome ou WebSearch ciblee." },
-    { "name": "NUFT 2027 Quant Internships", "type": "github_nuft", "url": "https://raw.githubusercontent.com/northwesternfintech/2027QuantInternships/main/README.md", "data_dir": "https://github.com/northwesternfintech/2027QuantInternships/tree/main/data", "bucket": "hedge_fund_quant", "verified_2026_06": true, "note": "Quant-only, US-centre mais contient des roles Londres (G-Research, Marshall Wace EU...). APPLIQUER LE FILTRE GEO Europe. Structure = section '## Firme' + sous-table |Role|Links|. Sections vides = pas de role ouvert. Source structuree: YAML dans ./data." },
-    { "name": "Simplify Summer 2026 Internships", "type": "github_readme", "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2026-Internships/dev/README.md", "note": "SWE/data science/AI/ML/quant, surtout US. Filtrer geo Europe + role_buckets." },
-    { "name": "vanshb03 Summer 2027 Internships", "type": "github_readme", "url": "https://raw.githubusercontent.com/vanshb03/Summer2027-Internships/dev/README.md", "note": "Tech/quant/data 2027 (US). Filtrer geo Europe. Verifier branche (main/dev) si 404." },
-    { "name": "quant-bobby quant-jobs", "type": "github_readme", "url": "https://raw.githubusercontent.com/quant-bobby/quant-jobs/main/README.md", "note": "Guide + listes quant." },
-    { "name": "LorenzoLaCorte european-tech-internships", "type": "github_readme", "url": "https://raw.githubusercontent.com/LorenzoLaCorte/european-tech-internships-2026/main/README.md", "bucket": "data_science_ai", "note": "EUROPE (Meta research Londres/Zurich, Amazon ML Berlin). Utile marche FR/EU. Verifier branche si 404." },
-    { "name": "frankaging awesome-ai-research-intern-list", "type": "github_readme", "url": "https://raw.githubusercontent.com/frankaging/awesome-ai-research-intern-list/main/README.md", "bucket": "data_science_ai", "verified_2026_06": false, "active": false, "note": "PERIME (2023/2024 seulement au 06-2026). Ne pas utiliser tant que non remis a jour." },
-    { "name": "OpenQuant", "type": "browse", "url": "https://openquant.co/?level=Internship", "note": "Job board quant. US-centre. Rendu JS -> Chrome. Filtrer geo Europe." },
-    { "name": "The Trackr - NA Finance 2027", "type": "browse", "url": "https://app.the-trackr.com/na-finance-2027/summer-internships", "note": "Version Amerique du Nord (secondaire vu le filtre Europe). Rendu JS -> Chrome." },
-    { "name": "AlumnEye", "type": "browse", "url": "https://www.alumneye.fr/", "bucket": "bank_quant", "note": "Agregateur ecoles de commerce FR. Surtout pour DATES de campagnes (banque/finance FR). Peut etre gated." }
+    {
+      "name": "The Trackr - EU Finance",
+      "type": "browse",
+      "url": "https://app.the-trackr.com/eu-finance/",
+      "bucket": "bank_quant",
+      "priority": 1,
+      "note": "PRIORITAIRE Europe. Banques + hedge funds (summers EU). Rendu JS -> Chrome."
+    },
+    {
+      "name": "eFinancialCareers - Quant Europe",
+      "type": "browse",
+      "url": "https://www.efinancialcareers.com/jobs/quant-internship/in-europe",
+      "bucket": "bank_quant",
+      "priority": 1,
+      "note": "PRIORITAIRE. Agrege les BANQUES (BNP, SocGen, Citi...) + HF en Europe. Rendu JS -> Chrome ou WebSearch ciblee."
+    },
+    {
+      "name": "NUFT 2027 Quant Internships",
+      "type": "github_nuft",
+      "url": "https://raw.githubusercontent.com/northwesternfintech/2027QuantInternships/main/README.md",
+      "data_dir": "https://github.com/northwesternfintech/2027QuantInternships/tree/main/data",
+      "bucket": "hedge_fund_quant",
+      "verified_2026_06": true,
+      "note": "Quant-only. Section '## Firme' + sous-table |Role|Links|. Sections vides = pas de role ouvert."
+    },
+    {
+      "name": "Simplify Summer 2026 Internships",
+      "type": "github_readme",
+      "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2026-Internships/dev/README.md",
+      "note": "SWE/data/AI/quant, surtout US. Filtrer geo + buckets."
+    },
+    {
+      "name": "vanshb03 Summer 2027 Internships",
+      "type": "github_readme",
+      "url": "https://raw.githubusercontent.com/vanshb03/Summer2027-Internships/dev/README.md",
+      "note": "Tech/quant/data 2027 (US). Verifier branche (main/dev) si 404."
+    },
+    {
+      "name": "quant-bobby quant-jobs",
+      "type": "github_readme",
+      "url": "https://raw.githubusercontent.com/quant-bobby/quant-jobs/main/README.md",
+      "note": "Guide + listes quant."
+    },
+    {
+      "name": "LorenzoLaCorte european-tech-internships",
+      "type": "github_readme",
+      "url": "https://raw.githubusercontent.com/LorenzoLaCorte/european-tech-internships-2026/main/README.md",
+      "bucket": "data_science_ai",
+      "note": "EUROPE (Meta Londres/Zurich, Amazon ML Berlin). Verifier branche si 404."
+    },
+    {
+      "name": "OpenQuant",
+      "type": "browse",
+      "url": "https://openquant.co/?level=Internship",
+      "note": "Board quant. US-centre. Rendu JS -> Chrome. Filtrer geo."
+    },
+    {
+      "name": "AlumnEye",
+      "type": "browse",
+      "url": "https://www.alumneye.fr/",
+      "bucket": "bank_quant",
+      "note": "Ecoles de commerce FR. Surtout DATES de campagnes. Peut etre gated."
+    }
   ],
-
-  "_api_note": "3 providers GET sans auth. Endpoints: greenhouse=https://boards-api.greenhouse.io/v1/boards/{slug}/jobs ; lever=https://api.lever.co/v0/postings/{slug}?mode=json ; ashby=https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true . ATTENTION reachability bac-a-sable (test 06-2026): ashby=OK, greenhouse boards-api=TIMEOUT/injoignable, lever=non teste. Si greenhouse injoignable au runtime, rabattre sur les repos. Workday = POST -> non supporte par web_fetch. TOUJOURS appliquer le filtre geo Europe sur les resultats.",
-
+  "_api_note": "3 providers GET sans auth. greenhouse=https://boards-api.greenhouse.io/v1/boards/{slug}/jobs ; lever=https://api.lever.co/v0/postings/{slug}?mode=json ; ashby=https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true . Reachability bac-a-sable (06-2026): ashby=OK, greenhouse boards-api=TIMEOUT possible, lever=non teste. Si injoignable, rabattre sur repos/crawl. Workday=POST non supporte par web_fetch (passer par Chrome). TOUJOURS annoter geo.",
   "api_sources": [
-    { "company": "Squarepoint Capital", "provider": "lever", "slug": "squarepoint-capital", "bucket": "hedge_fund_quant", "verified": false, "note": "Bureaux Londres/Paris. Filtrer Europe." },
-    { "company": "Hudson River Trading", "provider": "greenhouse", "slug": "wehrtyou", "bucket": "hedge_fund_quant", "verified": false, "note": "Bureau Londres. Filtrer Europe." },
-    { "company": "DRW", "provider": "greenhouse", "slug": "drweng", "bucket": "hedge_fund_quant", "verified": false, "note": "Bureau Londres. Filtrer Europe." },
-    { "company": "PDT Partners", "provider": "greenhouse", "slug": "pdtpartners", "bucket": "hedge_fund_quant", "verified": false },
-    { "company": "Akuna Capital", "provider": "greenhouse", "slug": "akunacapital", "bucket": "hedge_fund_quant", "verified": false, "note": "Bureau Londres possible. Filtrer Europe." },
-    { "company": "Radix Trading", "provider": "lever", "slug": "radix-trading", "bucket": "hedge_fund_quant", "verified": false },
-    { "company": "OpenAI", "provider": "ashby", "slug": "openai", "bucket": "data_science_ai", "verified_2026_06": true, "note": "SECONDAIRE. Ashby joignable + JSON valide. Bureau Londres -> filtrer Europe." },
-    { "company": "Anthropic", "provider": "greenhouse", "slug": "anthropic", "bucket": "data_science_ai", "verified": false, "note": "SECONDAIRE. Bureau Londres -> filtrer Europe." },
-    { "company": "Google DeepMind", "provider": "greenhouse", "slug": "deepmind", "bucket": "data_science_ai", "verified": false, "note": "SECONDAIRE. Confirme sur job-boards.greenhouse.io/deepmind. Bureau Londres -> filtrer Europe." }
+    {
+      "company": "Squarepoint Capital",
+      "provider": "lever",
+      "slug": "squarepoint-capital",
+      "bucket": "hedge_fund_quant",
+      "verified": false,
+      "note": "Bureaux Londres/Paris."
+    },
+    {
+      "company": "Hudson River Trading",
+      "provider": "greenhouse",
+      "slug": "wehrtyou",
+      "bucket": "hedge_fund_quant",
+      "verified": false,
+      "note": "Bureau Londres."
+    },
+    {
+      "company": "DRW",
+      "provider": "greenhouse",
+      "slug": "drweng",
+      "bucket": "hedge_fund_quant",
+      "verified": false,
+      "note": "Bureau Londres."
+    },
+    {
+      "company": "PDT Partners",
+      "provider": "greenhouse",
+      "slug": "pdtpartners",
+      "bucket": "hedge_fund_quant",
+      "verified": false
+    },
+    {
+      "company": "Akuna Capital",
+      "provider": "greenhouse",
+      "slug": "akunacapital",
+      "bucket": "hedge_fund_quant",
+      "verified": false
+    },
+    {
+      "company": "Radix Trading",
+      "provider": "lever",
+      "slug": "radix-trading",
+      "bucket": "hedge_fund_quant",
+      "verified": false
+    },
+    {
+      "company": "OpenAI",
+      "provider": "ashby",
+      "slug": "openai",
+      "bucket": "data_science_ai",
+      "verified_2026_06": true,
+      "note": "SECONDAIRE. Ashby joignable. Bureau Londres."
+    },
+    {
+      "company": "Anthropic",
+      "provider": "greenhouse",
+      "slug": "anthropic",
+      "bucket": "data_science_ai",
+      "verified": false,
+      "note": "SECONDAIRE. Bureau Londres."
+    },
+    {
+      "company": "Google DeepMind",
+      "provider": "greenhouse",
+      "slug": "deepmind",
+      "bucket": "data_science_ai",
+      "verified": false,
+      "note": "SECONDAIRE. Bureau Londres."
+    }
   ],
-
   "browse_sources": [
-    { "name": "BNP Paribas (Global Markets / Quant)", "url": "https://group.bnpparibas/en/careers/all-job-offers", "bucket": "bank_quant", "note": "PRIORITAIRE. Paris/Londres. Chercher 'quant' / 'strats' intern/stage/alternance. ATS maison." },
-    { "name": "Societe Generale (Global Markets / Quant)", "url": "https://careers.societegenerale.com/en/our-offers", "bucket": "bank_quant", "note": "PRIORITAIRE. Paris/Londres. Stage/alternance quant, model validation." },
-    { "name": "Citigroup (Markets Quant - EMEA)", "url": "https://jobs.citi.com/search-jobs/quantitative%20intern/Europe", "bucket": "bank_quant", "note": "PRIORITAIRE. Londres/EMEA. Workday/custom." },
-    { "name": "Barclays (QA / Markets)", "url": "https://search.jobs.barclays/internships-quantitative-analytics", "bucket": "bank_quant", "note": "Londres. Quantitative Analytics internships." },
-    { "name": "Deutsche Bank (Strats / dbQuant)", "url": "https://careers.db.com/students-graduates/", "bucket": "bank_quant", "note": "Londres/Francfort. Strats / quant graduate & intern." },
-    { "name": "HSBC (Markets Quant)", "url": "https://www.hsbc.com/careers/students-and-graduates", "bucket": "bank_quant", "note": "Londres. Quant / markets internship." },
-    { "name": "JPMorgan (Quant Research EMEA)", "url": "https://careers.jpmorgan.com/global/en/students/programs", "bucket": "bank_quant", "note": "Londres. Quantitative Research summer (EMEA)." },
-
-    { "name": "G-Research", "url": "https://www.gresearch.com/careers/early-careers/", "bucket": "hedge_fund_quant", "note": "PRIORITAIRE. Londres. ATS maison." },
-    { "name": "Marshall Wace", "url": "https://www.mwam.com/join-us/internships/", "bucket": "hedge_fund_quant", "note": "Londres (Mayfair). QR internship. ATS maison." },
-    { "name": "Man Group / AHL", "url": "https://www.man.com/early-careers", "bucket": "hedge_fund_quant", "note": "Londres. Systematique (AHL). Workday probable." },
-    { "name": "Qube Research & Technologies (QRT)", "url": "https://www.qube-rt.com/careers", "bucket": "hedge_fund_quant", "note": "Londres. ATS maison." },
-    { "name": "Capula Investment", "url": "https://www.capula.com/careers", "bucket": "hedge_fund_quant", "note": "Londres. Trading & research summer." },
-    { "name": "Aspect Capital", "url": "https://www.aspectcapital.com/careers", "bucket": "hedge_fund_quant", "note": "Londres. Systematique." },
-    { "name": "Citadel / Citadel Securities (EMEA)", "url": "https://www.citadel.com/careers/open-opportunities/", "bucket": "hedge_fund_quant", "note": "Bureaux Londres/Paris/Zurich. ATS custom. Filtrer Europe." },
-    { "name": "D. E. Shaw (London)", "url": "https://www.deshaw.com/careers/internships", "bucket": "hedge_fund_quant", "note": "Bureau Londres. Filtrer Europe." },
-    { "name": "Point72 / Cubist (London)", "url": "https://careers.point72.com/?experience=internships", "bucket": "hedge_fund_quant", "note": "Bureau Londres. QR/QD intern. Filtrer Europe." },
-    { "name": "Optiver (Amsterdam/London)", "url": "https://optiver.com/working-at-optiver/career-opportunities/", "bucket": "hedge_fund_quant", "note": "Amsterdam/Londres. Workday, rendu JS." },
-    { "name": "IMC Trading (Amsterdam)", "url": "https://careers.imc.com/", "bucket": "hedge_fund_quant", "note": "Amsterdam. Filtrer interns Europe." },
-    { "name": "Jane Street (London)", "url": "https://www.janestreet.com/join-jane-street/open-roles/?type=internship&location=london", "bucket": "hedge_fund_quant", "note": "Bureau Londres. Rendu JS. Filtrer Internship + Europe." },
-
-    { "name": "McKinsey QuantumBlack (EMEA)", "url": "https://www.mckinsey.com/careers/search-jobs", "bucket": "consulting_data", "note": "SECONDAIRE. Chercher 'QuantumBlack' + intern + Europe." },
-    { "name": "BCG GAMMA / BCG X (EMEA)", "url": "https://careers.bcg.com/global/en/search-results?keywords=BCG%20X%20data%20intern", "bucket": "consulting_data", "note": "SECONDAIRE. Filtrer Europe." }
+    {
+      "name": "BNP Paribas (Global Markets / Quant)",
+      "url": "https://group.bnpparibas/en/careers/all-job-offers",
+      "bucket": "bank_quant",
+      "note": "PRIORITAIRE. Paris/Londres. 'quant'/'strats' intern/stage/alternance."
+    },
+    {
+      "name": "Societe Generale (Global Markets / Quant)",
+      "url": "https://careers.societegenerale.com/en/our-offers",
+      "bucket": "bank_quant",
+      "note": "PRIORITAIRE. Paris/Londres. Stage/alternance quant, model validation."
+    },
+    {
+      "name": "Citigroup (Markets Quant - EMEA)",
+      "url": "https://jobs.citi.com/search-jobs/quantitative%20intern/Europe",
+      "bucket": "bank_quant",
+      "note": "PRIORITAIRE. Londres/EMEA."
+    },
+    {
+      "name": "Barclays (QA / Markets)",
+      "url": "https://search.jobs.barclays/internships-quantitative-analytics",
+      "bucket": "bank_quant",
+      "note": "Londres. Quantitative Analytics internships."
+    },
+    {
+      "name": "Deutsche Bank (Strats / dbQuant)",
+      "url": "https://careers.db.com/students-graduates/",
+      "bucket": "bank_quant",
+      "note": "Londres/Francfort."
+    },
+    {
+      "name": "HSBC (Markets Quant)",
+      "url": "https://www.hsbc.com/careers/students-and-graduates",
+      "bucket": "bank_quant",
+      "note": "Londres."
+    },
+    {
+      "name": "JPMorgan (Quant Research EMEA)",
+      "url": "https://careers.jpmorgan.com/global/en/students/programs",
+      "bucket": "bank_quant",
+      "note": "Londres. QR summer (EMEA)."
+    },
+    {
+      "name": "G-Research",
+      "url": "https://www.gresearch.com/careers/early-careers/",
+      "bucket": "hedge_fund_quant",
+      "note": "PRIORITAIRE. Londres. ATS maison."
+    },
+    {
+      "name": "Marshall Wace",
+      "url": "https://www.mwam.com/join-us/internships/",
+      "bucket": "hedge_fund_quant",
+      "note": "Londres. QR internship."
+    },
+    {
+      "name": "Man Group / AHL",
+      "url": "https://www.man.com/early-careers",
+      "bucket": "hedge_fund_quant",
+      "note": "Londres. Systematique (AHL). Workday probable."
+    },
+    {
+      "name": "Qube Research & Technologies (QRT)",
+      "url": "https://www.qube-rt.com/careers",
+      "bucket": "hedge_fund_quant",
+      "note": "Londres."
+    },
+    {
+      "name": "Capula Investment",
+      "url": "https://www.capula.com/careers",
+      "bucket": "hedge_fund_quant",
+      "note": "Londres."
+    },
+    {
+      "name": "Aspect Capital",
+      "url": "https://www.aspectcapital.com/careers",
+      "bucket": "hedge_fund_quant",
+      "note": "Londres. Systematique."
+    },
+    {
+      "name": "Citadel / Citadel Securities (EMEA)",
+      "url": "https://www.citadel.com/careers/open-opportunities/",
+      "bucket": "hedge_fund_quant",
+      "note": "Londres/Paris/Zurich."
+    },
+    {
+      "name": "D. E. Shaw (London)",
+      "url": "https://www.deshaw.com/careers/internships",
+      "bucket": "hedge_fund_quant",
+      "note": "Bureau Londres."
+    },
+    {
+      "name": "Point72 / Cubist (London)",
+      "url": "https://careers.point72.com/?experience=internships",
+      "bucket": "hedge_fund_quant",
+      "note": "Bureau Londres."
+    },
+    {
+      "name": "Optiver (Amsterdam/London)",
+      "url": "https://optiver.com/working-at-optiver/career-opportunities/",
+      "bucket": "hedge_fund_quant",
+      "note": "Amsterdam/Londres. Workday."
+    },
+    {
+      "name": "IMC Trading (Amsterdam)",
+      "url": "https://careers.imc.com/",
+      "bucket": "hedge_fund_quant",
+      "note": "Amsterdam."
+    },
+    {
+      "name": "Jane Street (London)",
+      "url": "https://www.janestreet.com/join-jane-street/open-roles/?type=internship&location=london",
+      "bucket": "hedge_fund_quant",
+      "note": "Bureau Londres. Rendu JS."
+    },
+    {
+      "name": "McKinsey QuantumBlack (EMEA)",
+      "url": "https://www.mckinsey.com/careers/search-jobs",
+      "bucket": "consulting_data",
+      "note": "SECONDAIRE. 'QuantumBlack' + intern + Europe."
+    },
+    {
+      "name": "BCG GAMMA / BCG X (EMEA)",
+      "url": "https://careers.bcg.com/global/en/search-results?keywords=BCG%20X%20data%20intern",
+      "bucket": "consulting_data",
+      "note": "SECONDAIRE."
+    }
   ],
-
   "search_fallback": {
-    "note": "Pour les firmes/roles sans source fiable, lancer une WebSearch ciblee par bucket. Ajouter systematiquement un terme geo Europe (London, Paris, EMEA...).",
+    "note": "Firmes/roles sans source fiable -> WebSearch ciblee par bucket. Toujours ajouter un terme geo Europe.",
     "query_templates": [
       "{company} quantitative researcher summer internship 2027 London OR Paris",
       "{company} quant intern 2027 Europe apply",
@@ -94,13 +600,56 @@
       "site:jobs.lever.co {company} intern",
       "site:boards.greenhouse.io {company} intern London"
     ],
-    "extra_companies": ["Capula", "Aspect Capital", "Qube RT", "XTX Markets", "Man Group", "Marshall Wace", "Millennium (London)", "Balyasny (London)", "BNP Paribas", "Societe Generale", "Natixis", "Credit Agricole CIB", "Barclays", "Deutsche Bank"]
+    "extra_companies": [
+      "Capula",
+      "Aspect Capital",
+      "Qube RT",
+      "XTX Markets",
+      "Man Group",
+      "Marshall Wace",
+      "Millennium (London)",
+      "Balyasny (London)",
+      "BNP Paribas",
+      "Societe Generale",
+      "Natixis",
+      "Credit Agricole CIB",
+      "Barclays",
+      "Deutsche Bank"
+    ]
   },
-
   "ds_targets": {
-    "_note": "Boites tech/fintech avec stages DATA SCIENTIST en Europe (Londres/Amsterdam/Paris/Berlin/Stockholm/Dublin...). Couche WebSearch: pour chaque, requete '{company} data scientist internship summer 2027 Europe', garder UNIQUEMENT les vrais postes data scientist (filtre --ds-only), puis scan_addjobs.py. Verifie 2026-06: Revolut/Meta/Spotify confirmes.",
+    "_note": "Boites tech/fintech avec stages DATA SCIENTIST en Europe. Couche WebSearch: '{company} data scientist internship summer 2027 {city}', garder UNIQUEMENT vrais postes DS (--ds-only), puis scan_addjobs.py.",
     "query_template": "{company} data scientist internship summer 2027 {city}",
-    "companies": ["Revolut", "Meta", "Amazon", "Spotify", "Booking.com", "Adyen", "Datadog", "Criteo", "Wise", "Monzo", "Klarna", "Zalando", "Delivery Hero", "King", "Doctolib", "Backmarket", "Trainline", "Deliveroo", "Just Eat Takeaway", "N26"],
-    "cities": ["London", "Amsterdam", "Paris", "Berlin", "Stockholm", "Dublin", "Barcelona"]
+    "companies": [
+      "Revolut",
+      "Meta",
+      "Amazon",
+      "Spotify",
+      "Booking.com",
+      "Adyen",
+      "Datadog",
+      "Criteo",
+      "Wise",
+      "Monzo",
+      "Klarna",
+      "Zalando",
+      "Delivery Hero",
+      "King",
+      "Doctolib",
+      "Backmarket",
+      "Trainline",
+      "Deliveroo",
+      "Just Eat Takeaway",
+      "N26"
+    ],
+    "cities": [
+      "London",
+      "Amsterdam",
+      "Paris",
+      "Berlin",
+      "Stockholm",
+      "Dublin",
+      "Barcelona"
+    ]
   }
 }
