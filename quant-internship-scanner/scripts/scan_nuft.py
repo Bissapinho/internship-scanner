@@ -10,7 +10,7 @@ import re, argparse, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import internship_common as ic
 
-def parse_nuft(md_text):
+def parse_nuft(md_text, bucket=""):
     rows = []
     for block in re.split(r'(?m)^##[ \t]+', md_text)[1:]:  # [ \t]+ : ne pas avaler le \n si titre vide
         lines = block.splitlines()
@@ -29,8 +29,8 @@ def parse_nuft(md_text):
             um = re.search(r'\((https?://[^)]+)\)', cells[1])
             if not um:
                 continue
-            rows.append({"company": company, "title": role,
-                         "location": location, "url": um.group(1).strip()})
+            rows.append({"company": company, "title": role, "location": location,
+                         "url": um.group(1).strip(), "bucket": bucket})
     return rows
 
 def main():
@@ -42,8 +42,8 @@ def main():
     ap.add_argument("--bucket", default="hedge_fund_quant")
     ap.add_argument("--today", default=None)
     a = ap.parse_args()
-    scanned = parse_nuft(open(a.md, encoding="utf-8").read())
-    ic.print_stats(a.source, ic.commit(scanned, a.csv, a.sources, a.today))
+    scanned = parse_nuft(open(a.md, encoding="utf-8").read(), bucket=a.bucket)
+    ic.print_stats(a.source, ic.commit(scanned, a.csv, a.sources, a.today, source=a.source))
 
 if __name__ == "__main__":
     main()

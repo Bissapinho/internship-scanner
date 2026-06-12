@@ -14,7 +14,7 @@ import json, argparse, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import internship_common as ic
 
-def parse_ashby(json_text, company):
+def parse_ashby(json_text, company, bucket=""):
     data = json.loads(json_text)
     jobs = data.get("jobs", data if isinstance(data, list) else [])
     rows = []
@@ -30,7 +30,7 @@ def parse_ashby(json_text, company):
         if not title or not url:
             continue
         rows.append({"company": company, "title": title, "location": loc,
-                     "url": url, "employmentType": emp})
+                     "url": url, "employmentType": emp, "bucket": bucket})
     return rows
 
 def main():
@@ -45,13 +45,13 @@ def main():
     ap.add_argument("--all", action="store_true", help="garder tous les roles (pas seulement les stages)")
     a = ap.parse_args()
 
-    rows = parse_ashby(open(a.json, encoding="utf-8").read(), a.company)
+    rows = parse_ashby(open(a.json, encoding="utf-8").read(), a.company, bucket=a.bucket)
     kw = ic.load_keywords(a.sources)
     if not a.all:
         rows = [r for r in rows
                 if ic.is_internship(r["title"], kw) or "intern" in r["employmentType"].lower()]
     source = a.source or f"Ashby:{a.company}"
-    ic.print_stats(source, ic.commit(rows, a.csv, a.sources, a.today))
+    ic.print_stats(source, ic.commit(rows, a.csv, a.sources, a.today, source=source))
 
 if __name__ == "__main__":
     main()
