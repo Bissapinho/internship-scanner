@@ -5,6 +5,9 @@ description: Transforme le CSV des stages (stages_quant_ds.csv) en classeur Exce
 
 # Format XLSX — rendre le CSV des stages en Excel mis en forme
 
+> **Chemin du CSV** : utilise le meme `OUT` que le scan, resolu via `locate_csv.py` (Etape 0 du
+> skill `scan-internships`) — typiquement `<repo>/data/stages_quant_ds.csv`. Ne devine pas un autre chemin.
+
 Le **CSV reste la base de donnees canonique** (deterministe, dedup, diff entre scans). Ce skill
 en derive un **classeur Excel lisible** sans jamais le modifier — sortie de presentation seulement.
 

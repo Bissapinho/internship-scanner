@@ -5,6 +5,9 @@ description: Controle qualite du CSV des stages — detecte doublons et quasi-do
 
 # Verify Links — controle qualite du CSV des stages
 
+> **Chemin du CSV** : utilise le meme `OUT` que le scan, resolu via `locate_csv.py` (Etape 0 du
+> skill `scan-internships`) — typiquement `<repo>/data/stages_quant_ds.csv`. Ne devine pas un autre chemin.
+
 Audit **deterministe** (sans reseau) + **test de liens morts** (le reseau est fait par Claude).
 Garantit un CSV propre : pas de doublons, liens valides, offres fermees reperees.
 

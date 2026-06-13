@@ -52,6 +52,20 @@ company,title,location,in_europe,bucket,source,url,first_seen,last_seen
 `last_seen` est rafraîchi à chaque scan → permet de repérer les offres qui n'ont pas réapparu
 (probablement fermées).
 
+### Dossier `data/` (persistance de l'historique)
+
+Le scanner maintient **un seul CSV canonique**, `data/stages_quant_ds.csv`, qui sert de base de
+données persistante : à chaque scan, les offres sont **upsertées** (les nouvelles ajoutées avec leur
+`first_seen`, les anciennes conservées avec `last_seen` rafraîchi). C'est ce qui permet de suivre
+l'évolution des offres dans le temps et de repérer celles qui ont fermé.
+
+- Le dossier `data/` **existe dans le repo** (suivi via `.gitkeep`), mais son **contenu est
+  gitignoré** : le CSV et ses sauvegardes restent **locaux**, jamais commités.
+- À chaque écriture, l'ancien CSV est copié en `stages_quant_ds.csv.bak` (sauvegarde rotative) —
+  un scan raté reste récupérable.
+- Avant chaque scan, `scripts/locate_csv.py` retrouve ce CSV parmi les dossiers connectés pour
+  garantir qu'on **réutilise toujours le même historique** (jamais de redémarrage à zéro).
+
 ### Skills & commandes
 
 - **`scan-internships`** (`/scan`) — découverte + collecte multi-couches → met à jour le CSV.

@@ -31,10 +31,28 @@ apprenticeship / apprenti / alternance / work-study, et les postes graduate / ne
 pas aussi des stages, ainsi que SWE. **Le CSV doit vivre dans un dossier connecte a Cowork.**
 
 > Chemins : `R = ${CLAUDE_PLUGIN_ROOT}`, `S = $R/skills/scan-internships/sources.json`,
-> `OUT = <dossier_user>/stages_quant_ds.csv`. **Tous les scripts sont sans reseau** : Claude fetch,
+> `OUT` = chemin canonique du CSV, **resolu a l'Etape 0** (voir ci-dessous), typiquement
+> `<repo>/data/stages_quant_ds.csv`. **Tous les scripts sont sans reseau** : Claude fetch,
 > les scripts parsent/ecrivent. **N'ecris JAMAIS le CSV a la main** (cause n°1 de colonnes decalees).
 
 ---
+
+## Etape 0 — LOCALISER le CSV (continuite de l'historique)
+
+**A faire en tout premier.** Le CSV ne doit jamais repartir de zero. Retrouve le fichier existant
+parmi les dossiers connectes avant d'ecrire quoi que ce soit :
+
+```
+python $R/scripts/locate_csv.py --roots <dossier_connecte_1> <dossier_connecte_2> ... \
+    --default <repo>/data/stages_quant_ds.csv
+```
+
+- Le script imprime le chemin du CSV existant le plus fourni (ou le defaut si aucun). **Utilise
+  EXACTEMENT ce chemin comme `OUT`** pour tous les scripts (scan, verify, format) du run.
+- Emplacement canonique : **`<repo>/data/stages_quant_ds.csv`**. Le dossier `data/` est **gitignore**
+  (donnees locales, non versionnees).
+- **Sauvegarde auto** : a chaque ecriture, l'ancien CSV est copie en `stages_quant_ds.csv.bak`
+  (1 fichier de secours rotatif). En cas de scan rate, restaure depuis ce `.bak`.
 
 ## Etape 1 — Couche DECOUVERTE (crawler "de reference en reference")
 

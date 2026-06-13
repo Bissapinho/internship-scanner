@@ -1,0 +1,5 @@
+# Donnees locales du scanner — le CONTENU n'est PAS versionne.
+# Seuls .gitignore et .gitkeep sont suivis, pour que le dossier data/ existe dans le repo.
+*
+!.gitignore
+!.gitkeep

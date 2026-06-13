@@ -21,7 +21,7 @@ Filtre TITRE (point utilisateur) : on ne garde que des STAGES / INTERNSHIPS.
 Retro-compatible : un CSV 6 colonnes de la v0.1 est relu sans erreur (colonnes manquantes -> "").
 Aucun acces reseau ici : les parseurs lisent des fichiers locaux deja recuperes par Claude.
 """
-import os, re, csv, json
+import os, re, csv, json, shutil
 from urllib.parse import urlparse
 from datetime import date
 
@@ -216,7 +216,14 @@ def write_csv(path, rows):
         return (order.get(r.get("bucket", ""), 99), r.get("company", "").lower(),
                 r.get("title", "").lower())
     ordered = sorted(rows.values(), key=sort_key)
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    abspath = os.path.abspath(path)
+    os.makedirs(os.path.dirname(abspath), exist_ok=True)
+    # SAUVEGARDE rotative : avant d'ecraser, copie l'ancien CSV en .bak (1 seul fichier de secours)
+    if os.path.exists(abspath):
+        try:
+            shutil.copy2(abspath, abspath + ".bak")
+        except Exception:
+            pass
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDNAMES, extrasaction="ignore")
         w.writeheader()
