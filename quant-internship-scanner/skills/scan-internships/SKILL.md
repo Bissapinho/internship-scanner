@@ -28,7 +28,7 @@ company,title,location,in_europe,bucket,source,url,first_seen,last_seen
 **Filtre TITRE (strict) :** on ne garde QUE des stages/internships. Gardes : intern, internship,
 stage, summer (un « summer analyst » de banque EST un stage). **Rejetes en dur** par les scripts :
 apprenticeship / apprenti / alternance / work-study, et les postes graduate / new grad qui ne sont
-pas aussi des stages, ainsi que SWE. **Le CSV doit vivre dans un dossier connecte a Cowork.**
+pas aussi des stages, ainsi que SWE.
 
 > Chemins : `R = ${CLAUDE_PLUGIN_ROOT}`, `S = $R/skills/scan-internships/sources.json`,
 > `OUT` = chemin canonique du CSV, **resolu a l'Etape 0** (voir ci-dessous), typiquement
@@ -136,16 +136,25 @@ Les scripts annotent `in_europe` et classent `bucket` automatiquement. Apres tou
 geo (ex. « Santa Clara » → no, « Munich » → yes). Ne touche QU'AUX `?`. Si tu reecris, utilise un
 writer CSV — jamais d'edition texte brute.
 
-## Etape 7 — Format + verif (chaine complete)
+## Etape 7 — Finalisation (UNE commande : dedup + rapport + xlsx + journal)
 
-Apres le scan, enchaine les deux autres skills du plugin :
-1. **`verify-links`** : `python $R/scripts/verify_links.py OUT --sources S --report verif.md`
-   (doublons, liens suspects, offres perimees). Pour tester les liens morts en HTTP, vois ce skill.
-2. **`format-xlsx`** : `python $R/scripts/format_xlsx.py OUT <dossier_user>/stages_quant_ds.xlsx`
-   → classeur Excel mis en forme (onglets Toutes / Europe / Finance quant / Resume).
+Apres le scan, lance l'**orchestrateur** `finalize.py` (verrouille toute la fin de chaine ;
+OUT = chemin resolu a l'Etape 0). Il enchaine deterministiquement : dedup `--fix` (fusion des
+doublons elargis), rapport qualite, export Excel a cote du CSV, **journal** `data/scan_log.csv`,
+puis imprime le recap.
 
-Presente le `.xlsx` (`mcp__cowork__present_files`) et donne le recap : `+N nouveaux`, total,
-repartition par bucket, sources en echec.
+```
+python $R/scripts/finalize.py OUT --sources S \
+    [--added <N_nouveaux>] [--sources-ok "NUFT,Ashby,WebSearch"] [--sources-fail "Greenhouse(timeout)"]
+```
+
+- Passe `--added`, `--sources-ok`, `--sources-fail` (que tu connais de la phase de scan) pour les
+  TRACER dans le journal — utile en run planifie pour suivre l'historique et reperer une source morte.
+- Sorties (toutes dans `data/`, gitignore) : `stages_quant_ds.xlsx`, `verif_stages.md`,
+  `scan_log.csv` (1 ligne par scan).
+- Liens morts en HTTP (test reseau) : etape optionnelle separee, voir le skill `verify-links`.
+
+Presente ensuite le `.xlsx` (`mcp__cowork__present_files`) et relaie le recap imprime par finalize.
 
 ---
 

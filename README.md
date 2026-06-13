@@ -75,6 +75,9 @@ l'évolution des offres dans le temps et de repérer celles qui ont fermé.
 - **`format-xlsx`** (`/format`) — génère un classeur Excel mis en forme (onglets Toutes / Europe /
   Finance quant / Résumé, couleurs par bucket, liens cliquables).
 
+La fin de chaîne est orchestrée par `scripts/finalize.py` (une commande : dedup `--fix` + rapport +
+Excel + **journal** `data/scan_log.csv`, une ligne par scan : date, total, +N, périmées, sources OK/échec).
+
 Le CSV vit dans un dossier **connecté à Cowork** ; les skills `verify`/`format` s'arrêtent avec une
 erreur claire si le CSV n'existe pas (ils n'en créent jamais un vide).
 

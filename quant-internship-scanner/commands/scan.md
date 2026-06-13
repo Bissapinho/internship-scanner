@@ -2,23 +2,23 @@
 description: Scanne (bimensuel) les stages quant QR/QT/QD & data science en naviguant de reference en reference, met a jour le CSV, le verifie et le formate en Excel
 ---
 
-Lance le skill `scan-internships` (lis d'abord son `SKILL.md`), puis enchaine `verify-links` et `format-xlsx`.
+Lance le skill `scan-internships` (lis d'abord son `SKILL.md`). La finalisation (dedup + verif +
+Excel + journal) est orchestree par `finalize.py`.
 
 Deroule attendu :
 
-1. **Localise le CSV** (continuite) : `python ${CLAUDE_PLUGIN_ROOT}/scripts/locate_csv.py --roots <dossiers connectes> --default <repo>/data/stages_quant_ds.csv` -> utilise ce chemin comme OUT.
+1. **Localise le CSV** (continuite) : `python ${CLAUDE_PLUGIN_ROOT}/scripts/locate_csv.py --roots <dossiers connectes> --default <repo>/data/stages_quant_ds.csv` → utilise ce chemin comme `OUT`.
 2. Lis `${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json`.
-2. **Couche DECOUVERTE (crawler borne depth-2)** : fetch les `crawl_seeds.pages`, lance
+3. **Couche DECOUVERTE (crawler borne depth-2)** : fetch les `crawl_seeds.pages`, lance
    `crawl_seeds.py` pour extraire les candidats (ATS allowlist, hors bruit, hors deja-connus),
    suis-les (≤ 2 sauts), injecte via `scan_addjobs.py --source "Crawl:<domaine>"`.
-3. **Repos** (NUFT via `scan_nuft.py`, autres README) + **API** (Greenhouse/Lever/Ashby) +
+4. **Repos** (NUFT via `scan_nuft.py`, autres README) + **API** (Greenhouse/Lever/Ashby) +
    **WebSearch** (banques/HF Europe + `ds_targets` en `--ds-only`). Chaque couche est independante :
    si une source echoue, note-le et continue.
-4. **Resous les `in_europe == "?"`** restants avec ta connaissance geo (ne touche qu'aux `?`).
-5. **verify-links** : `verify_links.py <OUT> --report verif_stages.md` (doublons, liens suspects,
-   offres perimees). Propose le test des liens morts si l'utilisateur le veut.
-6. **format-xlsx** : `format_xlsx.py <OUT> <OUT_xlsx>` → presente le `.xlsx` et donne le recap
-   (`+N nouveaux`, total, repartition par bucket, sources en echec).
+5. **Resous les `in_europe == "?"`** restants avec ta connaissance geo (ne touche qu'aux `?`).
+6. **Finalisation (orchestrateur)** : `python ${CLAUDE_PLUGIN_ROOT}/scripts/finalize.py <OUT> --sources S`
+   `[--added N] [--sources-ok "..."] [--sources-fail "..."]` → dedup `--fix`, rapport, Excel, et
+   journal `data/scan_log.csv`. Presente le `.xlsx` (`mcp__cowork__present_files`) et relaie le recap.
 
 Regles : un seul CSV persistant `stages_quant_ds.csv` (jamais recree), ecrit UNIQUEMENT par les
 scripts. Crawler borne a 2 sauts + allowlist ATS. Tot dans le cycle, peu d'offres ouvertes = normal.
