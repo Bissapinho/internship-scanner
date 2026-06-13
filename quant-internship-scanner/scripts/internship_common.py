@@ -35,7 +35,7 @@ SWE_RE = re.compile(r"\bswe\b|software\s+eng|software\s+dev|software\s+engineer"
 # apprentissage / alternance -> exclu
 APPRENTICE_RE = re.compile(r"apprentice|apprenti|alternance|alternant|work[\s-]?study|contrat\s+pro", re.I)
 # indices "stage / internship" (on exige au moins un de ceux-la dans le titre)
-INTERN_RE = re.compile(r"\bintern\b|internship|\bstage\b|\bstagiaire\b|\bsummer\b|\bstafrom\b", re.I)
+INTERN_RE = re.compile(r"\bintern\b|internship|\bstage\b|\bstagiaire\b|\bsummer\b", re.I)
 # graduate / poste diplome (rejete SAUF s'il s'agit aussi d'un stage)
 GRADUATE_RE = re.compile(r"\bgraduate\b|\bnew\s?grad\b|\bgrad\s+program", re.I)
 
@@ -239,9 +239,26 @@ def _better_url(a, b):
         return a if ha else b
     return a if len(a) <= len(b) else b
 
+def _norm_loc(loc):
+    return re.sub(r"\s+", " ", (loc or "").lower()).strip()
+
+def _richer(a, b):
+    """Choisit la variante la plus 'riche' d'un texte (plus de majuscules, puis plus longue)."""
+    a = a or ""; b = b or ""
+    ua = sum(c.isupper() for c in a); ub = sum(c.isupper() for c in b)
+    if ua != ub:
+        return a if ua > ub else b
+    if len(a) != len(b):
+        return a if len(a) > len(b) else b
+    return a
+
 def dedup_rows(rows):
-    """Fusionne les doublons ELARGIS. Deux lignes sont un doublon si (meme entreprise)
-    ET (meme url normalisee OU meme titre normalise). Renvoie (rows_fusionnees, n_fusions)."""
+    """Fusionne les doublons ELARGIS. Deux lignes fusionnent si (meme entreprise) ET :
+      - meme URL normalisee (http/https, www, slash, tracking ignores)  -> vrai doublon de lien ; OU
+      - meme TITRE normalise ET localisation COMPATIBLE (meme ville, ou l'une vide).
+    Une meme offre postee dans deux villes differentes (URLs differentes) n'est PAS fusionnee.
+    La ligne fusionnee garde la variante la plus riche (casse/annee), le plus ancien first_seen,
+    le dernier last_seen, l'union des sources. Renvoie (rows_fusionnees, n_fusions)."""
     n = len(rows)
     parent = list(range(n))
     def find(x):
@@ -256,11 +273,12 @@ def dedup_rows(rows):
     for i, r in enumerate(rows):
         comp = (r.get("company") or "").lower()
         ku = (comp, normalize_url(r.get("url", "")))
-        kt = (comp, normalize_title(r.get("title", "")))
         if ku in sig_url:
             union(i, sig_url[ku])
         else:
             sig_url[ku] = i
+        # titre : on inclut la localisation pour ne pas fusionner deux villes differentes
+        kt = (comp, normalize_title(r.get("title", "")), _norm_loc(r.get("location", "")))
         if kt in sig_title:
             union(i, sig_title[kt])
         else:
@@ -275,29 +293,33 @@ def dedup_rows(rows):
         fusions += len(g) - 1
         base = dict(g[0])
         url = base.get("url", "")
+        company = base.get("company", ""); title = base.get("title", "")
         first = base.get("first_seen", "") or ""
         last = base.get("last_seen", "") or ""
         srcs, loc = set(), base.get("location", "")
         bucket, eu = base.get("bucket", "?"), base.get("in_europe", "?")
         for r in g:
             url = _better_url(url, r.get("url", "")) if url else r.get("url", "")
+            company = _richer(company, r.get("company", ""))
+            title = _richer(title, r.get("title", ""))
             fs = r.get("first_seen", "") or ""
             ls = r.get("last_seen", "") or ""
             if fs and (not first or fs < first):
                 first = fs
             if ls and ls > last:
                 last = ls
-            for s in (r.get("source", "") or "").split(","):
-                s = s.strip()
-                if s:
-                    srcs.add(s)
-            if not loc:
+            for sname in (r.get("source", "") or "").split(","):
+                sname = sname.strip()
+                if sname:
+                    srcs.add(sname)
+            if len(r.get("location", "") or "") > len(loc or ""):
                 loc = r.get("location", "")
             if (not bucket or bucket == "?") and r.get("bucket") not in (None, "", "?"):
                 bucket = r.get("bucket")
             if eu == "?" and r.get("in_europe") in ("yes", "no"):
                 eu = r.get("in_europe")
-        base.update({"url": url, "first_seen": first, "last_seen": last,
+        base.update({"url": url, "company": company, "title": title,
+                     "first_seen": first, "last_seen": last,
                      "source": ", ".join(sorted(srcs)), "location": loc,
                      "bucket": bucket, "in_europe": eu})
         merged.append(base)
