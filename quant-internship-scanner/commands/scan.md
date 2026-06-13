@@ -6,7 +6,8 @@ Lance le skill `scan-internships` (lis d'abord son `SKILL.md`), puis enchaine `v
 
 Deroule attendu :
 
-1. Lis `${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json`.
+1. **Localise le CSV** (continuite) : `python ${CLAUDE_PLUGIN_ROOT}/scripts/locate_csv.py --roots <dossiers connectes> --default <repo>/data/stages_quant_ds.csv` -> utilise ce chemin comme OUT.
+2. Lis `${CLAUDE_PLUGIN_ROOT}/skills/scan-internships/sources.json`.
 2. **Couche DECOUVERTE (crawler borne depth-2)** : fetch les `crawl_seeds.pages`, lance
    `crawl_seeds.py` pour extraire les candidats (ATS allowlist, hors bruit, hors deja-connus),
    suis-les (≤ 2 sauts), injecte via `scan_addjobs.py --source "Crawl:<domaine>"`.
